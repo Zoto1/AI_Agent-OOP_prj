@@ -110,17 +110,11 @@ classDiagram
     }
 
     
-    class ToolRegistry {
-        <<external – designed separately>>
-    }
+   
 
-    
-
-    %% Dependencies
-    AgentLoop --> LLMClient          : uses (via shared_ptr)
-    AgentLoop --> ToolRegistry       : uses (via shared_ptr)
-    AgentLoop --> SkillLoader        : uses (via shared_ptr)
-    AgentLoop --> LoopDetector       : uses (via shared_ptr)
+    AgentLoop --> LLMClient          : uses 
+    AgentLoop --> SkillLoader        : uses 
+    AgentLoop --> LoopDetector       : uses
     AgentLoop --> Step               : creates per iteration
     AgentLoop --> Message            : manages history
     AgentLoop ..> ToolCall           : parses from LLM response
