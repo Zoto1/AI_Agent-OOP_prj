@@ -54,7 +54,6 @@ classDiagram
         <<abstract>>
         #config : LLMConfig
         +chat(messages : vector~Message~) string*
-        +chatMultimodal(messages : vector~Message~, images : vector~string~) string*
         +setConfig(cfg : LLMConfig) void
         +getModelName() string
     }
@@ -109,15 +108,18 @@ classDiagram
         -buildSystemMessage(task : string) Message
     }
 
-    
+    class ToolRegistry {
+        <<external – designed separately>>
+    }
    
 
-    AgentLoop --> LLMClient          : uses 
-    AgentLoop --> SkillLoader        : uses 
-    AgentLoop --> LoopDetector       : uses
-    AgentLoop --> Step               : creates per iteration
-    AgentLoop --> Message            : manages history
-    AgentLoop ..> ToolCall           : parses from LLM response
+    AgentLoop --> LLMClient : use
+    AgentLoop --> ToolRegistry: use
+    AgentLoop --> SkillLoader : use        
+    AgentLoop --> LoopDetector: use    
+    AgentLoop --> Step: creates per iteration
+    AgentLoop --> Message: manages history
+    AgentLoop ..> ToolCall: parses from LLM response
 
     OllamaClient --> LLMConfig       : reads
     OllamaClient --> Message         : serialises
