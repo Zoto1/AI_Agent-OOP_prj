@@ -15,7 +15,6 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* use
 
 
 OllamaClient::OllamaClient(const LLMConfig& cfg) : LLMClient(cfg) {
-    // Khởi tạo handle cURL khi sinh đối tượng
     curl_handle = curl_easy_init();
     if (!curl_handle) {
         throw std::runtime_error("Lỗi [OllamaClient]: Không thể khởi tạo cURL.");
@@ -23,7 +22,6 @@ OllamaClient::OllamaClient(const LLMConfig& cfg) : LLMClient(cfg) {
 }
 
 OllamaClient::~OllamaClient() {
-    // RAII: Đảm bảo giải phóng tài nguyên cURL khi hủy đối tượng
     if (curl_handle) {
         curl_easy_cleanup(static_cast<CURL*>(curl_handle));
         curl_handle = nullptr;
@@ -54,7 +52,7 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
 
     json payload = {
         {"model", _config.model_name},
-        {"stream", false}, // Tắt stream để nhận cục bộ 1 lần
+        {"stream", false}, 
         {"options", {
             {"temperature", _config.temperature},
             {"num_predict", _config.max_tokens}
