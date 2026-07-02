@@ -58,6 +58,7 @@ classDiagram
         +success : bool
         +totalTokens : int
         +steps : vector~Step~
+        +totalTimems : int
         +toJSON() string
     }
 

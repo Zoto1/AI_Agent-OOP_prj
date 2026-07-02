@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/CMakeFiles/json-populate"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/CMakeFiles/json-populate.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/CMakeFiles/json-populate-complete.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-build.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-configure.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-download.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-install.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-mkdir.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-patch.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-test.rule"
+		},
+		{
+			"file" : "/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"json-populate"
+		],
+		"name" : "json-populate"
+	}
+}

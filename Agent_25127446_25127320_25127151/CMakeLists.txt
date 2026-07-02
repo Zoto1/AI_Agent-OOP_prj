@@ -1,109 +1,41 @@
-# Class Diagram — Harness Subsystem
+cmake_minimum_required(VERSION 3.10)
 
-```mermaid
-classDiagram
-    class Environment {
-        <<abstract>>
-        +setup() void*
-        +teardown() void*
-        +execute(cmd) string*
-        +isHealthy() bool*
-    }
+# 1. Khai báo tên dự án
+project(OopAgent VERSION 1.0 LANGUAGES CXX)
 
-    class NativeEnvironment {
-        -workingDir : path
-        -isSetUp : bool
-    }
+# 2. Ép chuẩn C++
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-    class SandboxEnvironment {
-        -containerId : string
-        -cfg : Config
-    }
+# 3. Tìm các thư viện bên thứ 3 (Dependencies)
+find_package(CURL REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
-    class Evaluator {
-        <<abstract>>
-        +evaluate(t) optional~double~*
-        +getName() string*
-    }
+# 4. Chỉ định thư mục chứa file header (.h)
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
-    class KeywordEvaluator {
-        -keywords : vector~string~
-        -requireAll : bool
-    }
+# 5. Gom nhóm mã nguồn từ các module thành một Static Library
+# Gom toàn bộ file .cpp trong các thư mục con
+file(GLOB_RECURSE SRC_FILES 
+    "src/agent/*.cpp"
+    "src/client/*.cpp"
+    "src/tools/*.cpp"
+    "src/harness/*.cpp"
+)
 
-    class FunctionalEvaluator {
-        -evalScript : string
-        -runScript() int
-    }
+# Tạo thư viện tĩnh từ mã nguồn
+add_library(OopAgentCore STATIC ${SRC_FILES})
 
-    class VLMEvaluator {
-        -llmClient : shared_ptr~LLMClient~
-        -prompt : string
-    }
+# Liên kết thư viện bên thứ ba vào thư viện tĩnh của dự án
+target_link_libraries(OopAgentCore PUBLIC 
+    CURL::libcurl 
+    nlohmann_json::nlohmann_json
+)
 
-    class Step {
-        <<struct>>
-        +stepId : int
-        +thought : string
-        +action : variant~ToolCall_FinalAnswer~
-        +toolResult : string
-        +tokensUsed : int
-        +latencyMs : long
-    }
+# 6. Tạo file thực thi chính (Executable)
+# # Giả sử bạn có file src/main.cpp để chạy toàn bộ chương trình
+# add_executable(agent_run src/main.cpp)
 
-    class Trajectory {
-        <<struct>>
-        +taskId : string
-        +model : string
-        +success : bool
-        +totalTokens : int
-        +steps : vector~Step~
-        +toJSON() string
-    }
-
-    class HarnessRunner {
-        <<orchestrator>>
-        -agent : AgentLoop&
-        -env : unique_ptr~Environment~
-        -evaluators : vector~unique_ptr~Evaluator~~
-        -trajectories : vector~Trajectory~
-        -stepHook : function~void_Step~
-        +runTask(task) Trajectory
-        +runBatch(tasks) vector~Trajectory~
-        +getSuccessRate() float
-        +exportAllJSON(dir) void
-    }
-
-    Environment <|-- NativeEnvironment
-    Environment <|-- SandboxEnvironment
-
-    Evaluator <|-- KeywordEvaluator
-    Evaluator <|-- FunctionalEvaluator
-    Evaluator <|-- VLMEvaluator
-
-    Trajectory *-- Step : contains
-
-    HarnessRunner *-- Environment : owns
-    HarnessRunner *-- Evaluator : owns
-    HarnessRunner *-- Trajectory : owns
-```
-
-## Quan hệ giữa các class
-
-| Quan hệ | Ký hiệu | Ý nghĩa |
-|---|---|---|
-| `Environment <\|-- Native/SandboxEnvironment` | Inheritance | Override toàn bộ pure virtual của `Environment` |
-| `Evaluator <\|-- Keyword/Functional/VLMEvaluator` | Inheritance | Strategy Pattern — 3 thuật toán chấm điểm |
-| `Trajectory *-- Step` | Composition | `Trajectory` sở hữu `vector<Step>` |
-| `HarnessRunner *-- Environment` | Composition | Sở hữu qua `unique_ptr`, đổi impl không cần sửa `HarnessRunner` |
-| `HarnessRunner *-- Evaluator` | Composition | Sở hữu nhiều evaluator, chạy tuần tự |
-| `HarnessRunner *-- Trajectory` | Composition | Tích lũy kết quả sau mỗi `runTask()` |
-
-## Design Patterns
-
-| Pattern | Class áp dụng |
-|---|---|
-| **Strategy** | `Evaluator` → `KeywordEvaluator`, `FunctionalEvaluator`, `VLMEvaluator` |
-| **Template Method** | `HarnessRunner::runTask()` — skeleton cố định |
-| **Observer / Hook** | `stepHook` inject vào `AgentLoop` |
-| **Dependency Inversion** | `HarnessRunner` phụ thuộc `Environment` abstract, không phụ thuộc concrete |
+# Liên kết thư viện tĩnh nội bộ vào file thực thi
+# target_link_libraries(agent_run PRIVATE OopAgentCore)
