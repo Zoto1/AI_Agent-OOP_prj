@@ -1,9 +1,11 @@
 #include "ollama_client.h"
 #include <iostream>
 #include <stdexcept>
+#include <nlohmann/json.hpp>
+
 #include <curl/curl.h>
 
-using json = nlohmann::json;
+using json = nlohmann::json; 
 
 
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
@@ -41,7 +43,7 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
     CURL* curl = static_cast<CURL*>(curl_handle);
     std::string response_string;
     
-    std::string url = config.base_url + "/api/chat";
+    std::string url = _config.base_url + "/api/chat";
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     // --- Chuẩn bị Headers ---
@@ -86,7 +88,7 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, config.timeout_ms); //set timeout
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, _config.timeout_ms); //set timeout
 
     CURLcode res = curl_easy_perform(curl);
     
