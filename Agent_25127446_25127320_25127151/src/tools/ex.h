@@ -16,9 +16,8 @@ public:
         std::array<char, 128> buffer;
         std::string result;
 
-        // Sử dụng popen để chạy lệnh và mở luồng đọc dữ liệu trả về
-#define POPEN popen // Nếu dùng Windows thì đổi thành _popen
-#define PCLOSE pclose // Nếu dùng Windows thì đổi thành _pclose
+#define POPEN popen 
+#define PCLOSE pclose 
 
         std::unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(command.c_str(), "r"), PCLOSE);
         if (!pipe) {
