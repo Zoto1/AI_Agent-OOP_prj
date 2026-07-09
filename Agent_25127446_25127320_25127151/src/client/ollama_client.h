@@ -8,8 +8,6 @@ class OllamaClient : public LLMClient {
 private:
     void* curl_handle; 
 
-
-
 public:
     explicit OllamaClient(const LLMConfig& cfg);
     ~OllamaClient() override;
