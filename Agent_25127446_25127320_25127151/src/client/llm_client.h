@@ -14,7 +14,7 @@ struct LLMConfig
 };
 struct Message
 {
-    std::string role;
+    std::string role;// "system", "user", "assistant"
     std::string content;
 };
 

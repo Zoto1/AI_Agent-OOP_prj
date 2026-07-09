@@ -125,10 +125,38 @@ CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/client/ollama_client.cpp -o CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.s
 
+CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
+CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/functional_evaluator.cpp
+CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/functional_evaluator.cpp
+
+CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/functional_evaluator.cpp > CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.i
+
+CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/functional_evaluator.cpp -o CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s
+
+CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
+CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/keyword_evaluator.cpp
+CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/keyword_evaluator.cpp
+
+CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/keyword_evaluator.cpp > CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.i
+
+CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/keyword_evaluator.cpp -o CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.s
+
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/trajectory.cpp
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/trajectory.cpp
 
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.i: cmake_force
@@ -139,13 +167,30 @@ CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/trajectory.cpp -o CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.s
 
+CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
+CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/MMain.cpp
+CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/MMain.cpp
+
+CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/MMain.cpp > CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.i
+
+CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/MMain.cpp -o CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.s
+
 # Object files for target OopAgentCore
 OopAgentCore_OBJECTS = \
 "CMakeFiles/OopAgentCore.dir/src/agent/agent_loop.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/agent/loop_detector.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/agent/skill_loader.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.o" \
-"CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o"
+"CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o" \
+"CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o" \
+"CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o" \
+"CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o"
 
 # External object files for target OopAgentCore
 OopAgentCore_EXTERNAL_OBJECTS =
@@ -154,10 +199,13 @@ libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/agent/agent_loop.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/agent/loop_detector.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/agent/skill_loader.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.o
+libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o
+libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o
+libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/build.make
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX static library libOopAgentCore.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking CXX static library libOopAgentCore.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/OopAgentCore.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/OopAgentCore.dir/link.txt --verbose=$(VERBOSE)
 

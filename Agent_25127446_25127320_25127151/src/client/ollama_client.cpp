@@ -82,7 +82,7 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
         json_messages.push_back(j_msg);
     }
     payload["messages"] = json_messages;
-
+;
     std::string payload_str = payload.dump();
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_str.c_str());
 

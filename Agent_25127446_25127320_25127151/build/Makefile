@@ -225,6 +225,54 @@ src/client/ollama_client.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.s
 .PHONY : src/client/ollama_client.cpp.s
 
+src/harness/functional_evaluator.o: src/harness/functional_evaluator.cpp.o
+.PHONY : src/harness/functional_evaluator.o
+
+# target to build an object file
+src/harness/functional_evaluator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o
+.PHONY : src/harness/functional_evaluator.cpp.o
+
+src/harness/functional_evaluator.i: src/harness/functional_evaluator.cpp.i
+.PHONY : src/harness/functional_evaluator.i
+
+# target to preprocess a source file
+src/harness/functional_evaluator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.i
+.PHONY : src/harness/functional_evaluator.cpp.i
+
+src/harness/functional_evaluator.s: src/harness/functional_evaluator.cpp.s
+.PHONY : src/harness/functional_evaluator.s
+
+# target to generate assembly for a file
+src/harness/functional_evaluator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s
+.PHONY : src/harness/functional_evaluator.cpp.s
+
+src/harness/keyword_evaluator.o: src/harness/keyword_evaluator.cpp.o
+.PHONY : src/harness/keyword_evaluator.o
+
+# target to build an object file
+src/harness/keyword_evaluator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o
+.PHONY : src/harness/keyword_evaluator.cpp.o
+
+src/harness/keyword_evaluator.i: src/harness/keyword_evaluator.cpp.i
+.PHONY : src/harness/keyword_evaluator.i
+
+# target to preprocess a source file
+src/harness/keyword_evaluator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.i
+.PHONY : src/harness/keyword_evaluator.cpp.i
+
+src/harness/keyword_evaluator.s: src/harness/keyword_evaluator.cpp.s
+.PHONY : src/harness/keyword_evaluator.s
+
+# target to generate assembly for a file
+src/harness/keyword_evaluator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.s
+.PHONY : src/harness/keyword_evaluator.cpp.s
+
 src/harness/trajectory.o: src/harness/trajectory.cpp.o
 .PHONY : src/harness/trajectory.o
 
@@ -249,6 +297,30 @@ src/harness/trajectory.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.s
 .PHONY : src/harness/trajectory.cpp.s
 
+src/tools/MMain.o: src/tools/MMain.cpp.o
+.PHONY : src/tools/MMain.o
+
+# target to build an object file
+src/tools/MMain.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o
+.PHONY : src/tools/MMain.cpp.o
+
+src/tools/MMain.i: src/tools/MMain.cpp.i
+.PHONY : src/tools/MMain.i
+
+# target to preprocess a source file
+src/tools/MMain.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.i
+.PHONY : src/tools/MMain.cpp.i
+
+src/tools/MMain.s: src/tools/MMain.cpp.s
+.PHONY : src/tools/MMain.s
+
+# target to generate assembly for a file
+src/tools/MMain.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.s
+.PHONY : src/tools/MMain.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -270,9 +342,18 @@ help:
 	@echo "... src/client/ollama_client.o"
 	@echo "... src/client/ollama_client.i"
 	@echo "... src/client/ollama_client.s"
+	@echo "... src/harness/functional_evaluator.o"
+	@echo "... src/harness/functional_evaluator.i"
+	@echo "... src/harness/functional_evaluator.s"
+	@echo "... src/harness/keyword_evaluator.o"
+	@echo "... src/harness/keyword_evaluator.i"
+	@echo "... src/harness/keyword_evaluator.s"
 	@echo "... src/harness/trajectory.o"
 	@echo "... src/harness/trajectory.i"
 	@echo "... src/harness/trajectory.s"
+	@echo "... src/tools/MMain.o"
+	@echo "... src/tools/MMain.i"
+	@echo "... src/tools/MMain.s"
 .PHONY : help
 
 
