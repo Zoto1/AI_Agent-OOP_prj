@@ -32,11 +32,12 @@ private:
     int _warning;
     int _critical;
     // c++17
-    std::optional<LoopSeverity> checkGenericRepeat(const std::vector<Record> &history) const;
-    std::optional<LoopSeverity> checkPingPong(const std::vector<Record> &history) const;
+    static bool isSameAction(const std::variant<ToolCall, FinalAnswer> &a,
+                             const std::variant<ToolCall, FinalAnswer> &b);                                   
+    std::optional<LoopSeverity> checkGenericRepeat(const std::vector<Step> &history) const;
+    std::optional<LoopSeverity> checkPingPong(const std::vector<Step> &history) const;
 
 public:
     explicit LoopDetector(int warning = 2, int critcal = 4);
-    LoopResult detect(const std::vector<Record>&history)const;
-
+    LoopResult detect(const std::vector<Step> &history) const;
 };
