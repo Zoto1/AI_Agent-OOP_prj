@@ -23,7 +23,7 @@ public:
             std::cout << "-> Da dang ky thanh cong tool: [" << tool->getName() << "]\n";
         }
     }
-s
+
     std::string executeTool(const std::string& name, const std::map<std::string, std::string>& args) {
         auto it = tools.find(name);
         if (it != tools.end()) {

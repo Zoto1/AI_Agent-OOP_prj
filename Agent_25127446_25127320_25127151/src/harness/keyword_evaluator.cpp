@@ -1,8 +1,7 @@
 #include "keyword_evaluator.h"
 #include <variant>
 
-KeywordEvaluator::KeywordEvaluator(const std::vector<std::string>& keywords)
-    : required_keywords(keywords) {}
+
 
 double KeywordEvaluator::evaluate(const Trajectory& trajectory) {
     // Duyệt qua dữ liệu lịch sử trong Trajectory
