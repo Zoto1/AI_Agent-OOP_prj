@@ -33,7 +33,7 @@ OllamaClient::~OllamaClient() {
 
 std::string OllamaClient::chat(const std::vector<Message>& messages) {
     return chatMultimodal(messages, {}); 
-}
+}// Check lai 
 
 std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, const std::vector<std::string>& images) {
     if (!curl_handle) {
@@ -59,14 +59,6 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
             {"temperature", _config.temperature},
             {"num_predict", _config.max_tokens}
         }}
-
-//         {
-//   "username": "nguyen_van_a",
-//   "age": 28,
-//   "is_active": true,
-//   "roles": ["user", "editor"]
-// }
-
     };
 
     json json_messages = json::array();

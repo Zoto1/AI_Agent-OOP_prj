@@ -3,8 +3,8 @@
 #include <map>
 #include <string>
 #include "res.h"         // File chứa ToolRegistry của bạn
-#include "readfile.cpp"   // Nhúng file chứa các class Tool của bạn
-#include "writefile.cpp" 
+// #include "readfile.cpp"   // Nhúng file chứa các class Tool của bạn
+// #include "writefile.cpp" 
 int main() {
     system("chcp 65001 > nul");
     std::cout << "==================================================" << std::endl;

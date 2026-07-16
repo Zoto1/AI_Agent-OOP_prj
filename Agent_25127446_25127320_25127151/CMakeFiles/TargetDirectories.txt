@@ -1,0 +1,3 @@
+/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/CMakeFiles/OopAgentCore.dir
+/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/CMakeFiles/edit_cache.dir
+/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/CMakeFiles/rebuild_cache.dir

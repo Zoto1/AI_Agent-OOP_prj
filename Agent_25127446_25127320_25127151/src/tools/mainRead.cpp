@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include "res.h"         // File chứa ToolRegistry của bạn
-#include "readfile.cpp"   // Tạm thời giữ lại nếu bạn viết gộp toàn bộ class FileReadTool trong này
+// #include "readfile.cpp"   // Tạm thời giữ lại nếu bạn viết gộp toàn bộ class FileReadTool trong này
 
 int main() {
     std::cout << "==================================================" << std::endl;
