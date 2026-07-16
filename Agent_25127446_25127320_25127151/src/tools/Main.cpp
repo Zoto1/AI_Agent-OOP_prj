@@ -1,6 +1,6 @@
-#include "res.h"
-#include "cal.h"
-#include "ex.h"
+#include "tool_registry.h"
+#include "calculator.h"
+#include "exec.h"
 #include <iostream>
 using namespace std;
 int main() {
