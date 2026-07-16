@@ -8,7 +8,7 @@ int main() {
     std::cout << "=== CHUONG TRINH TEST NOI BO MEMORY TOOL ===\n\n";
 
     // Kích hoạt: Gọi hàm static init() của bạn để tự động nạp vào Registry Singleton
-    MemoryTool::init();
+    Memory::init();
 
     // ==========================================
     // KỊCH BẢN TEST 1: LƯU DỮ LIỆU (ACTION = SAVE)
