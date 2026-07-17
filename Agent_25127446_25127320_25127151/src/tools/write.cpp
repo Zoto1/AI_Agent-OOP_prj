@@ -1,8 +1,4 @@
-#include "tool.h"
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <string>
+#include "write.h"
 
 class FileWriteTool : public Tool {
 private:
