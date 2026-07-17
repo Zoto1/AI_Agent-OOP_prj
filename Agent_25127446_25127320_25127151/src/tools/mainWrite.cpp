@@ -2,7 +2,7 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "res.h"         // File chứa ToolRegistry của bạn
+#include "tool_registry.h"         // File chứa ToolRegistry của bạn
 // #include "readfile.cpp"   // Nhúng file chứa các class Tool của bạn
 // #include "writefile.cpp" 
 int main() {

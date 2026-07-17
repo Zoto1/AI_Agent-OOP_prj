@@ -2,8 +2,6 @@
 #include <map>
 #include <string>
 
-class CalculatorTool : public Tool {
-public:
     CalculatorTool() : Tool("calculator", "Thực hiện phép tính cơ bản giữa 2 số a và b.") {}
 
     std::string execute(const std::map<std::string, std::string>& args) override {
@@ -28,4 +26,4 @@ public:
             return std::string("Lỗi xử lý dữ liệu: ") + e.what();
         }
     }
-};
+

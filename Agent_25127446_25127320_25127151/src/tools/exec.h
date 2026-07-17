@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <array>
 
 class ExecTool : public Tool {
 public:

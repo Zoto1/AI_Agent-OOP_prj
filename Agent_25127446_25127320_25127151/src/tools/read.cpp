@@ -1,14 +1,8 @@
 #include "read.h"
-
-class FileReadTool : public Tool {
-private:
-    std::string base_directory; // kiểu là chỉ giới hạn quyền đọc ở file thui k có tràn lan 
-
-public:
-    FileReadTool(const std::string& base_dir = "./") 
+   FileReadTool::FileReadTool(const std::string& base_dir)
         : Tool("FileReadTool", "Cong cu doc noi dung tu mot file text"), base_directory(base_dir) {}
     
-    std::string execute(const std::map<std::string, std::string>& args) override {
+    std::string FileReadTool::execute(const std::map<std::string, std::string>& args) override {
         // 1. Kiểm tra path truyền vào
         auto it = args.find("path");
         if (it == args.end()) {
@@ -32,4 +26,4 @@ public:
         // 5. Trả về chuỗi nội dung file
         return content.str();
     }
-};
+

@@ -1,12 +1,7 @@
 #include "tool_registry.h"
-
-class ToolRegistry {
-private:
     std::map<std::string, std::shared_ptr<Tool>> tools;
 
     ToolRegistry() = default;
-
-public:
     ToolRegistry(const ToolRegistry&) = delete;
     ToolRegistry& operator=(const ToolRegistry&) = delete;
 
@@ -29,4 +24,4 @@ public:
         }
         return "Loi: Khong tim thay tool mang ten '" + name + "'";
     }
-};
+

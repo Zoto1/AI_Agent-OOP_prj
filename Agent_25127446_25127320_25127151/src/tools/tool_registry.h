@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 
-class ToolRegistry {
+class ToolRegistry: public Tool{
 private:
     std::map<std::string, std::shared_ptr<Tool>> tools;
 
@@ -18,4 +18,4 @@ public:
     static ToolRegistry& getInstance();
 
     void registerTool(std::shared_ptr<Tool> tool);
-    std::string executeTool(const std::string& name, const std::map<std::string, std::string>& args) };
+    std::string executeTool(const std::string& name, const std::map<std::string, std::string>& args); };

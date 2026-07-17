@@ -5,11 +5,9 @@
 #define POPEN popen 
 #define PCLOSE pclose 
 
-class ExecTool : public Tool {
-public:
     ExecTool() : Tool("exec", "Chạy lệnh terminal hệ thống.") {}
 
-    std::string execute(const std::map<std::string, std::string>& args) override {
+    std::string execute(const std::map<std::string, std::string>& args) {
         if (args.find("command") == args.end()) {
             return "Lỗi: Thiếu tham số 'command'.";
         }
@@ -28,4 +26,3 @@ public:
 
         return result.empty() ? "Lệnh thực thi thành công (Không có phản hồi đầu ra)." : result;
     }
-};
