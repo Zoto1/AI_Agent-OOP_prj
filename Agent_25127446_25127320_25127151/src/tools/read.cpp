@@ -1,7 +1,4 @@
-
-#include "tool.h"
-#include <fstream>
-#include <sstream>
+#include "read.h"
 
 class FileReadTool : public Tool {
 private:
