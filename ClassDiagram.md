@@ -1,3 +1,6 @@
+### CLASS DIAGRAM 
+
+```mermaid
 classDiagram
     %% ===== LLM Client Layer =====
     class LLMClient {
@@ -132,3 +135,5 @@ classDiagram
     HarnessRunner o-- "many" Evaluator : uses
     HarnessRunner ..> AgentLoop : creates and runs
     HarnessRunner ..> Trajectory : records
+
+```
