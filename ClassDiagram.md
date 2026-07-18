@@ -21,18 +21,14 @@ classDiagram
 
     %% ===== Tool Layer =====
     class Tool {
-        
+        <<abstract>>
+      
     }
     class ExecTool
-
     class FileTool
-
     class WebSearchTool
-
     class MemoryTool
-
     class CalculatorTool
-
     Tool <|-- ExecTool
     Tool <|-- FileTool
     Tool <|-- WebSearchTool
@@ -46,11 +42,7 @@ classDiagram
 
     %% ===== Skill Layer =====
     class SkillLoader {
-        -skillsDir: filesystem::path
-        -skills: vector~Skill~
-        +loadAll() void
-        +selectSkill(task: string) optional~Skill~
-        +injectIntoPrompt(systemPrompt: string&) void
+       
     }
     class Skill {
         +name: string
@@ -61,27 +53,22 @@ classDiagram
 
     %% ===== Agent Loop / Action / Step =====
     class ToolCall {
-       
-       
+        +type: string
+        +tool: string
+        +args: string
     }
     class FinalAnswer {
-      
-      
+        +type: string
+        +text: string
     }
     class Step {
-        
-        
+       
     }
     Step *-- ToolCall
     Step *-- FinalAnswer
 
     class LoopDetector {
-        -_warning: int
-        -_critical: int
-        +detect(history: vector~Step~) LoopResult
-        -checkGenericRepeat(history) optional~LoopSeverity~
-        -checkPingPong(history) optional~LoopSeverity~
-        -actionSignature(step: Step)$ string
+        
     }
     class LoopResult {
         +type: LoopType
@@ -121,20 +108,14 @@ classDiagram
 
     %% ===== Trajectory =====
     class Trajectory {
-        +task_id: string
-        +model: string
-        +success: bool
-        +total_tokens: int
-        +total_time_ms: long long
-        +steps: vector~Step~
-        +toJson() json
+     
     }
     Trajectory o-- "many" Step
 
     %% ===== Evaluator =====
     class Evaluator {
         <<abstract>>
-        +evaluate(trajectory: Trajectory, task: Task) EvalResult*
+        
     }
     class KeywordEvaluator
     class FunctionalEvaluator
@@ -145,7 +126,7 @@ classDiagram
 
     %% ===== Harness =====
     class HarnessRunner {
-        
+       
     }
     HarnessRunner *-- Environment : owns
     HarnessRunner o-- "many" Evaluator : uses
