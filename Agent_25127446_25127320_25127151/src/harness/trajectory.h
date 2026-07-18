@@ -7,11 +7,16 @@ struct ToolCall {
     std::string type = "tool_call";
     std::string tool;
     std::string args;
+
+
+
 };
 
 struct FinalAnswer {
     std::string type = "final_answer";
     std::string text;
+
+
 };
 
 // Tách Step ra ngoài để cấu trúc rõ ràng hơn
@@ -24,6 +29,7 @@ struct Step {
     std::string tool_result;
     int tokens_used = 0;
     long long latency_ms = 0;
+
 };
 
 struct Trajectory {
