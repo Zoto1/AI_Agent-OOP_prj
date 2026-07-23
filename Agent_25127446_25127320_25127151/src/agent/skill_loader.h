@@ -35,3 +35,5 @@ public:
     std::optional<Skill> select_skill(const std::string &task_description);
     std::string inject_into_prompt(const std::string &original_system_prompt, const Skill &selected_skill);
 };
+
+
