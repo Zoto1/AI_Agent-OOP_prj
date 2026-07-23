@@ -1,2 +1,0 @@
-/usr/bin/ar qc libHarnessCore.a CMakeFiles/HarnessCore.dir/src/harness/trajectory.cpp.o
-/usr/bin/ranlib libHarnessCore.a
