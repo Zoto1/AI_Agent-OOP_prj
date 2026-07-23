@@ -297,29 +297,149 @@ src/harness/trajectory.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.s
 .PHONY : src/harness/trajectory.cpp.s
 
-src/tools/MMain.o: src/tools/MMain.cpp.o
-.PHONY : src/tools/MMain.o
+src/tools/calculator.o: src/tools/calculator.cpp.o
+.PHONY : src/tools/calculator.o
 
 # target to build an object file
-src/tools/MMain.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o
-.PHONY : src/tools/MMain.cpp.o
+src/tools/calculator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o
+.PHONY : src/tools/calculator.cpp.o
 
-src/tools/MMain.i: src/tools/MMain.cpp.i
-.PHONY : src/tools/MMain.i
+src/tools/calculator.i: src/tools/calculator.cpp.i
+.PHONY : src/tools/calculator.i
 
 # target to preprocess a source file
-src/tools/MMain.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.i
-.PHONY : src/tools/MMain.cpp.i
+src/tools/calculator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.i
+.PHONY : src/tools/calculator.cpp.i
 
-src/tools/MMain.s: src/tools/MMain.cpp.s
-.PHONY : src/tools/MMain.s
+src/tools/calculator.s: src/tools/calculator.cpp.s
+.PHONY : src/tools/calculator.s
 
 # target to generate assembly for a file
-src/tools/MMain.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.s
-.PHONY : src/tools/MMain.cpp.s
+src/tools/calculator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.s
+.PHONY : src/tools/calculator.cpp.s
+
+src/tools/exec.o: src/tools/exec.cpp.o
+.PHONY : src/tools/exec.o
+
+# target to build an object file
+src/tools/exec.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o
+.PHONY : src/tools/exec.cpp.o
+
+src/tools/exec.i: src/tools/exec.cpp.i
+.PHONY : src/tools/exec.i
+
+# target to preprocess a source file
+src/tools/exec.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.i
+.PHONY : src/tools/exec.cpp.i
+
+src/tools/exec.s: src/tools/exec.cpp.s
+.PHONY : src/tools/exec.s
+
+# target to generate assembly for a file
+src/tools/exec.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.s
+.PHONY : src/tools/exec.cpp.s
+
+src/tools/memory_tool.o: src/tools/memory_tool.cpp.o
+.PHONY : src/tools/memory_tool.o
+
+# target to build an object file
+src/tools/memory_tool.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o
+.PHONY : src/tools/memory_tool.cpp.o
+
+src/tools/memory_tool.i: src/tools/memory_tool.cpp.i
+.PHONY : src/tools/memory_tool.i
+
+# target to preprocess a source file
+src/tools/memory_tool.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.i
+.PHONY : src/tools/memory_tool.cpp.i
+
+src/tools/memory_tool.s: src/tools/memory_tool.cpp.s
+.PHONY : src/tools/memory_tool.s
+
+# target to generate assembly for a file
+src/tools/memory_tool.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.s
+.PHONY : src/tools/memory_tool.cpp.s
+
+src/tools/read.o: src/tools/read.cpp.o
+.PHONY : src/tools/read.o
+
+# target to build an object file
+src/tools/read.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o
+.PHONY : src/tools/read.cpp.o
+
+src/tools/read.i: src/tools/read.cpp.i
+.PHONY : src/tools/read.i
+
+# target to preprocess a source file
+src/tools/read.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.i
+.PHONY : src/tools/read.cpp.i
+
+src/tools/read.s: src/tools/read.cpp.s
+.PHONY : src/tools/read.s
+
+# target to generate assembly for a file
+src/tools/read.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.s
+.PHONY : src/tools/read.cpp.s
+
+src/tools/tool_registry.o: src/tools/tool_registry.cpp.o
+.PHONY : src/tools/tool_registry.o
+
+# target to build an object file
+src/tools/tool_registry.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o
+.PHONY : src/tools/tool_registry.cpp.o
+
+src/tools/tool_registry.i: src/tools/tool_registry.cpp.i
+.PHONY : src/tools/tool_registry.i
+
+# target to preprocess a source file
+src/tools/tool_registry.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.i
+.PHONY : src/tools/tool_registry.cpp.i
+
+src/tools/tool_registry.s: src/tools/tool_registry.cpp.s
+.PHONY : src/tools/tool_registry.s
+
+# target to generate assembly for a file
+src/tools/tool_registry.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.s
+.PHONY : src/tools/tool_registry.cpp.s
+
+src/tools/write.o: src/tools/write.cpp.o
+.PHONY : src/tools/write.o
+
+# target to build an object file
+src/tools/write.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o
+.PHONY : src/tools/write.cpp.o
+
+src/tools/write.i: src/tools/write.cpp.i
+.PHONY : src/tools/write.i
+
+# target to preprocess a source file
+src/tools/write.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.i
+.PHONY : src/tools/write.cpp.i
+
+src/tools/write.s: src/tools/write.cpp.s
+.PHONY : src/tools/write.s
+
+# target to generate assembly for a file
+src/tools/write.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.s
+.PHONY : src/tools/write.cpp.s
 
 # Help Target
 help:
@@ -351,9 +471,24 @@ help:
 	@echo "... src/harness/trajectory.o"
 	@echo "... src/harness/trajectory.i"
 	@echo "... src/harness/trajectory.s"
-	@echo "... src/tools/MMain.o"
-	@echo "... src/tools/MMain.i"
-	@echo "... src/tools/MMain.s"
+	@echo "... src/tools/calculator.o"
+	@echo "... src/tools/calculator.i"
+	@echo "... src/tools/calculator.s"
+	@echo "... src/tools/exec.o"
+	@echo "... src/tools/exec.i"
+	@echo "... src/tools/exec.s"
+	@echo "... src/tools/memory_tool.o"
+	@echo "... src/tools/memory_tool.i"
+	@echo "... src/tools/memory_tool.s"
+	@echo "... src/tools/read.o"
+	@echo "... src/tools/read.i"
+	@echo "... src/tools/read.s"
+	@echo "... src/tools/tool_registry.o"
+	@echo "... src/tools/tool_registry.i"
+	@echo "... src/tools/tool_registry.s"
+	@echo "... src/tools/write.o"
+	@echo "... src/tools/write.i"
+	@echo "... src/tools/write.s"
 .PHONY : help
 
 

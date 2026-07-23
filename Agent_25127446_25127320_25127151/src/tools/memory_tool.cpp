@@ -34,9 +34,9 @@ bool Memory::save_context(const std::string& key, const std::string& value) {
     std::cout << "[Memory] Dang luu: " << key << " -> " << value << " vao " << storage_path << "\n";
     return true; 
 }
-std::optional<std::string> Memory::load_context(const std::string& query) {
+std::optional<std::string> Memory::load_context(const std::string& query) { // check lai ham nay
     bool tim_thay = false;
-
+    
     if (tim_thay) {
         return "Nội dung tìm thấy"; 
     }

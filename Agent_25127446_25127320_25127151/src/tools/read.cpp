@@ -12,7 +12,7 @@
         // 2. Tổng lại các file cần đọc
         std::string file_path = base_directory + it->second;
 
-        // 3. Mở file
+        // 3. Mở filed
         std::ifstream file(file_path);
         if (!file.is_open()) {
             return "Error: Khong the mo file: " + file_path;
