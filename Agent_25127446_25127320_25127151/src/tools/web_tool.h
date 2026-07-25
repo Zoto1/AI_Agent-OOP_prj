@@ -1,5 +1,6 @@
 #pragma once
-
+#include <iostream>
+#include <sstream>
 #include "tool.h"
 #include <string>
 #include <memory>
