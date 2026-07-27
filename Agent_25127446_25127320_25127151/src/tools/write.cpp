@@ -1,5 +1,7 @@
 #include "write.h"
-
+#include <sstream>
+#include <iostream>
+#include <fstream>
     std::string base_directory; // Thư mục gốc bảo mật để ghi file
     FileWriteTool(const std::string& n, const std::string& d, const std::string& base_dir = "./")
         : Tool(n, d), base_directory(base_dir) {

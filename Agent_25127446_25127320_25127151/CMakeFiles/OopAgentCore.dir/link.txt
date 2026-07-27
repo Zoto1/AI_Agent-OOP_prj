@@ -1,2 +1,0 @@
-/usr/bin/ar qc libOopAgentCore.a CMakeFiles/OopAgentCore.dir/src/agent/agent_loop.cpp.o CMakeFiles/OopAgentCore.dir/src/agent/loop_detector.cpp.o CMakeFiles/OopAgentCore.dir/src/agent/skill_loader.cpp.o CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.o CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o CMakeFiles/OopAgentCore.dir/src/tools/MMain.cpp.o
-/usr/bin/ranlib libOopAgentCore.a

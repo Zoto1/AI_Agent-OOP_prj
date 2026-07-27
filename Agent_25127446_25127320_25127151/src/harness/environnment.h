@@ -12,4 +12,8 @@ public:
     
     // Hàm mô phỏng việc thực thi một lệnh/hành động bên trong môi trường đó
     virtual std::string executeCommand(const std::string& command) = 0;
+
+    // Kiểm tra môi trường có đang sẵn sàng để nhận lệnh hay không
+    // (đã setup() thành công và chưa bị teardown()/lỗi giữa chừng).
+    virtual bool isHealthy() const = 0;
 };
