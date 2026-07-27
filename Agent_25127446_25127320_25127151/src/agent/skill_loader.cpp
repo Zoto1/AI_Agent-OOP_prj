@@ -14,8 +14,10 @@ std::string SkillLoader::readFile(const fs::path &filepath)
     if (!file)
     {
         std::cerr << "khong the mo file" << filepath.string() << "\n";
+
         return "";
     }
+    return "";
 }
 
 static std::string to_lowercase(const std::string &str)
@@ -27,7 +29,7 @@ static std::string to_lowercase(const std::string &str)
     return lower_str;
 }
 
-SkillLoader::SkillLoader(const std::string &directory = "skills/")
+SkillLoader::SkillLoader(const std::string &directory)
 {
     skill_directory = directory;
 }
@@ -112,6 +114,7 @@ Không được tự nhẩm kết quả.*/
             best_skill = skill;
         }
     }
+    return best_skill;
 }
 std::string SkillLoader::inject_into_prompt(const std::string &original_system_prompt, const Skill &selected_skill)
 {
