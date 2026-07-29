@@ -11,10 +11,12 @@ struct LLMConfig
     float temperature = 0.7f;
     int max_tokens = 1024;
     int timeout_ms = 30000;
+
+    std::optional<std::string> api_key;
 };
 struct Message
 {
-    std::string role;// "system", "user", "assistant"
+    std::string role; // "system", "user", "assistant"
     std::string content;
 };
 
@@ -44,4 +46,3 @@ public:
     virtual std::string chatMultimodal(const std::vector<Message> &messages,
                                        const std::vector<std::string> &images) = 0;
 };
-
