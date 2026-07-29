@@ -2,15 +2,14 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
-    std::string base_directory; // Thư mục gốc bảo mật để ghi file
-    FileWriteTool(const std::string& n, const std::string& d, const std::string& base_dir = "./")
+    FileWriteTool::FileWriteTool(const std::string& n, const std::string& d, const std::string& base_dir)
         : Tool(n, d), base_directory(base_dir) {
         if (!base_directory.empty() && base_directory.back() != '/' && base_directory.back() != '\\') {
             base_directory += "/";
         }
     }
 
-    std::string execute(const std::map<std::string, std::string>& args) {
+    std::string FileWriteTool::execute(const std::map<std::string, std::string>& args) {
         // 1. check path
         auto path_it = args.find("path");
         if (path_it == args.end() || path_it->second.empty()) {

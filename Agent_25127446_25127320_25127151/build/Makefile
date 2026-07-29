@@ -393,30 +393,6 @@ src/tools/exec.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.s
 .PHONY : src/tools/exec.cpp.s
 
-src/tools/main.o: src/tools/main.cpp.o
-.PHONY : src/tools/main.o
-
-# target to build an object file
-src/tools/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/main.cpp.o
-.PHONY : src/tools/main.cpp.o
-
-src/tools/main.i: src/tools/main.cpp.i
-.PHONY : src/tools/main.i
-
-# target to preprocess a source file
-src/tools/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/main.cpp.i
-.PHONY : src/tools/main.cpp.i
-
-src/tools/main.s: src/tools/main.cpp.s
-.PHONY : src/tools/main.s
-
-# target to generate assembly for a file
-src/tools/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/tools/main.cpp.s
-.PHONY : src/tools/main.cpp.s
-
 src/tools/memory_tool.o: src/tools/memory_tool.cpp.o
 .PHONY : src/tools/memory_tool.o
 
@@ -579,9 +555,6 @@ help:
 	@echo "... src/tools/exec.o"
 	@echo "... src/tools/exec.i"
 	@echo "... src/tools/exec.s"
-	@echo "... src/tools/main.o"
-	@echo "... src/tools/main.i"
-	@echo "... src/tools/main.s"
 	@echo "... src/tools/memory_tool.o"
 	@echo "... src/tools/memory_tool.i"
 	@echo "... src/tools/memory_tool.s"

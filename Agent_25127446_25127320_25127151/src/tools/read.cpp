@@ -2,7 +2,7 @@
    FileReadTool::FileReadTool(const std::string& base_dir)
         : Tool("FileReadTool", "Cong cu doc noi dung tu mot file text"), base_directory(base_dir) {}
     
-    std::string FileReadTool::execute(const std::map<std::string, std::string>& args) override {
+    std::string FileReadTool::execute(const std::map<std::string, std::string>& args)  {
         // 1. Kiểm tra path truyền vào
         auto it = args.find("path");
         if (it == args.end()) {

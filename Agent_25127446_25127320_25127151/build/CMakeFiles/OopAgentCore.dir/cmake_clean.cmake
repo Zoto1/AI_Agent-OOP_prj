@@ -21,8 +21,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o.d"
   "CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o"
   "CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o.d"
-  "CMakeFiles/OopAgentCore.dir/src/tools/main.cpp.o"
-  "CMakeFiles/OopAgentCore.dir/src/tools/main.cpp.o.d"
   "CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o"
   "CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o.d"
   "CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o"

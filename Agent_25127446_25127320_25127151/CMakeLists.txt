@@ -34,8 +34,7 @@ target_link_libraries(OopAgentCore PUBLIC
 )
 
 # 6. Tạo file thực thi chính (Executable)
-# # Giả sử bạn có file src/main.cpp để chạy toàn bộ chương trình
-add_executable(agent_run src/main.cpp)
+# add_executable(agent_run src/tools/main.cpp)
 
 # Liên kết thư viện tĩnh nội bộ vào file thực thi
 # target_link_libraries(agent_run PRIVATE OopAgentCore)
