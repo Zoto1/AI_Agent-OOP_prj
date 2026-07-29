@@ -4,18 +4,13 @@
 #include "tool.h"
 #include <string>
 #include <memory>
+#include <sstream>
+#include <map>
 
 class WebSearchTool : public Tool {
 public:
     WebSearchTool();
-    ~WebSearchTool() override = default;
-
-    std::string execute(const std::string& input) override;
-
-    std::string getName() const override;
-
-    std::string getDescription() const override;
-
+    std::string execute(const std::map<std::string, std::string>& args) override;
 private:
     std::string performSearchRequest(const std::string& query);
 };

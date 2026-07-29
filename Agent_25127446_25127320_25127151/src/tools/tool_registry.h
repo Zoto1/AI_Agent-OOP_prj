@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 
-class ToolRegistry: public Tool{
+class ToolRegistry {
 private:
     std::map<std::string, std::shared_ptr<Tool>> tools;
 
