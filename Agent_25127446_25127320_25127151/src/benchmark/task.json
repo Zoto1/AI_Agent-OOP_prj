@@ -1,0 +1,82 @@
+[
+  {
+    "id": "task_001",
+    "description": "[DE] Tinh toan don gian - chi dung calculator",
+    "instruction": "Tinh 128 chia cho 8 bang bao nhieu?",
+    "eval_type": "keyword",
+    "eval_keywords": ["16"],
+    "max_steps": 5
+  },
+  {
+    "id": "task_002",
+    "description": "[DE] Ghi file - chi dung file_write",
+    "instruction": "Ghi dong chu 'Xin chao AI Agent' vao file greeting.txt",
+    "eval_type": "functional",
+    "eval_script": "test -f greeting.txt && grep -q 'Xin chao AI Agent' greeting.txt",
+    "max_steps": 5
+  },
+  {
+    "id": "task_003",
+    "description": "[DE] Ghi roi doc lai file",
+    "instruction": "Tao file notes.txt voi noi dung 'Hello Agent', sau do doc lai file do va cho biet noi dung ben trong la gi",
+    "eval_type": "keyword",
+    "eval_keywords": ["Hello Agent"],
+    "max_steps": 6
+  },
+  {
+    "id": "task_004",
+    "description": "[DE] Lay thoi gian hien tai cua may",
+    "instruction": "Dung tool exec chay lenh 'date' de lay thoi gian hien tai cua he thong, luu ket qua vao file time.txt",
+    "eval_type": "functional",
+    "eval_script": "test -s time.txt",
+    "max_steps": 5
+  },
+  {
+    "id": "task_005",
+    "description": "[TB] Tinh toan co dieu kien, ket hop calculator + file_write",
+    "instruction": "Tinh (12 + 8) nhan 3. Neu ket qua lon hon 50 thi luu vao file big.txt, nguoc lai luu vao file small.txt",
+    "eval_type": "functional",
+    "eval_script": "test -f big.txt && grep -q '60' big.txt",
+    "max_steps": 8
+  },
+  {
+    "id": "task_006",
+    "description": "[TB] Chuoi write -> read -> calculator -> write",
+    "instruction": "Ghi so 7 vao file input.txt. Sau do doc lai file do, tinh binh phuong cua so vua doc duoc, va luu ket qua vao file output.txt",
+    "eval_type": "functional",
+    "eval_script": "test -f output.txt && grep -q '49' output.txt",
+    "max_steps": 10
+  },
+  {
+    "id": "task_007",
+    "description": "[TB] Su dung tool memory de luu va truy xuat thong tin",
+    "instruction": "Luu thong tin 'ngon_ngu_yeu_thich=Cpp' vao bo nho (memory), sau do truy xuat lai gia tri vua luu va bao cao lai cho nguoi dung",
+    "eval_type": "keyword",
+    "eval_keywords": ["Cpp"],
+    "max_steps": 6
+  },
+  {
+    "id": "task_008",
+    "description": "[TB] Exec co dieu kien ket hop file_write",
+    "instruction": "Chay lenh 'echo Hello World' bang tool exec. Neu output chua chu 'Hello' thi ghi chu 'PASS' vao file check.txt, nguoc lai ghi 'FAIL'",
+    "eval_type": "functional",
+    "eval_script": "grep -q 'PASS' check.txt",
+    "max_steps": 8
+  },
+  {
+    "id": "task_009",
+    "description": "[KHO] Multi-step: tinh tong, luu file, doc lai, cong them, ghi de",
+    "instruction": "Tinh tong cac so tu 1 den 10, luu ket qua vao file sum.txt. Sau do doc lai file sum.txt, cong them 100 vao gia tri do, va ghi de ket qua moi vao file sum.txt",
+    "eval_type": "functional",
+    "eval_script": "grep -q '155' sum.txt",
+    "max_steps": 12
+  },
+  {
+    "id": "task_010",
+    "description": "[KHO] Agent tu quyet dinh nhanh xu ly khi web_search thanh cong/that bai",
+    "instruction": "Dung tool web_search de tim 'thoi tiet Ho Chi Minh City hom nay'. Neu tim duoc ket qua, luu tom tat vao file weather.txt. Neu khong tim duoc gi ca, ghi dong chu 'Khong co ket noi' vao file weather.txt",
+    "eval_type": "functional",
+    "eval_script": "test -f weather.txt",
+    "max_steps": 10
+  }
+]
