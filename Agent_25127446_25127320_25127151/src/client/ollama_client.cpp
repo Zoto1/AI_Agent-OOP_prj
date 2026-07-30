@@ -33,8 +33,7 @@ OllamaClient::~OllamaClient() {
 
 std::string OllamaClient::chat(const std::vector<Message>& messages) {
     return chatMultimodal(messages, {}); 
-}// Check lai 
-
+}
 std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, const std::vector<std::string>& images) {
     if (!curl_handle) {
         throw std::runtime_error("Lỗi [OllamaClient]: cURL handle chưa được khởi tạo.");
@@ -49,8 +48,11 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
     // --- Chuẩn bị Headers ---
     struct curl_slist* headers = nullptr;
     headers = curl_slist_append(headers, "Content-Type: application/json");
+    
+    // Thêm header để bỏ qua trang cảnh báo của Pinggy Free
+    headers = curl_slist_append(headers, "X-Pinggy-No-Page: true"); 
+    
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
 
     json payload = {
         {"model", _config.model_name},
@@ -74,7 +76,7 @@ std::string OllamaClient::chatMultimodal(const std::vector<Message>& messages, c
         json_messages.push_back(j_msg);
     }
     payload["messages"] = json_messages;
-;
+    
     std::string payload_str = payload.dump();
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_str.c_str());
 
