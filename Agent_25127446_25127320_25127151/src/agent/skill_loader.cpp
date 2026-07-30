@@ -13,11 +13,13 @@ std::string SkillLoader::readFile(const fs::path &filepath)
     std::ifstream file(filepath);
     if (!file)
     {
-        std::cerr << "khong the mo file" << filepath.string() << "\n";
-
+        std::cerr << "[SkillLoader Error] Khong the mo file: " << filepath.string() << "\n";
         return "";
     }
-    return "";
+
+    std::ostringstream content;
+    content << file.rdbuf();
+    return content.str();
 }
 
 static std::string to_lowercase(const std::string &str)
@@ -27,6 +29,16 @@ static std::string to_lowercase(const std::string &str)
                    [](unsigned char c)
                    { return std::tolower(c); });
     return lower_str;
+}
+
+static std::string trim(const std::string &value)
+{
+    const std::string whitespace = " \t\r\n";
+    auto start = value.find_first_not_of(whitespace);
+    if (start == std::string::npos)
+        return "";
+    auto end = value.find_last_not_of(whitespace);
+    return value.substr(start, end - start + 1);
 }
 
 SkillLoader::SkillLoader(const std::string &directory)
@@ -47,20 +59,27 @@ void SkillLoader::load_skills()
         if (entry.is_regular_file() && entry.path().extension() == ".md")
         {
             Skill skill;
-            skill.name = entry.path().stem().string(); // Lấy tên file (bỏ đuôi .md) làm tên skill
+            skill.name = entry.path().stem().string();
 
             std::string content = readFile(entry.path());
+            if (content.empty())
+            {
+                std::cerr << "[SkillLoader Warning] Nội dung skill trống: " << entry.path().string() << "\n";
+                continue;
+            }
+
             std::stringstream ss(content);
             std::string line;
             std::stringstream instruction_stream;
 
             while (std::getline(ss, line))
             {
-                if (line.find("Keywords:") == 0)
+                std::string trimmed = trim(line);
+                if (trimmed.rfind("Keywords:", 0) == 0)
                 {
-                    skill.keywords = line.substr(9); // keywords:
-                    instruction_stream << line << "\n";
+                    skill.keywords = trim(trimmed.substr(9));
                 }
+                instruction_stream << line << "\n";
             }
 
             skill.instruction = instruction_stream.str();
