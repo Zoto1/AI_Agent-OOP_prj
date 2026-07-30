@@ -22,8 +22,15 @@ void AgentLoop::setStepHook(std::function<void(const Step &)> hook)
 
 std::string AgentLoop::run(const std::string &task)
 {
-    Message mes_system = this->buildSystemMessage(task);
-    this->history.push_back(mes_system);
+   history.clear();
+
+    Message mes_system = buildSystemMessage(task);
+    history.push_back(mes_system);
+
+    Message user_message;
+    user_message.role = "user";
+    user_message.content = task;
+    history.push_back(user_message);
 
     for (int i = 0; i < this->max_steps; ++i)
     {
@@ -74,16 +81,15 @@ void AgentLoop::observe(const std::string &tool_result)
 
 std::string AgentLoop::think()
 {
-    return "Chuỗi phản hồi suy nghĩ từ AI";
+    return llm->chat(history);
 }
 
-std::variant<ToolCall, FinalAnswer> AgentLoop::act(const std::string &thought)
+std::variant<ToolCall, FinalAnswer>
+AgentLoop::act(const std::string &thought)
 {
-    (void)thought;
-
-    FinalAnswer dummy_answer;
-    dummy_answer.text = "Giả lập câu trả lời cuối";
-    return dummy_answer;
+    FinalAnswer answer;
+    answer.text = thought;
+    return answer;
 }
 
 Message AgentLoop::buildSystemMessage(const std::string &task)

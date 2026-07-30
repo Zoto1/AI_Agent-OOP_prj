@@ -34,7 +34,7 @@ target_link_libraries(OopAgentCore PUBLIC
 )
 
 # 6. Tạo file thực thi chính (Executable)
-add_executable(agent_run /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/main.cpp)
+add_executable(agent_run main.cpp)
 
 # Liên kết thư viện tĩnh nội bộ vào file thực thi
 target_link_libraries(agent_run PRIVATE OopAgentCore)
