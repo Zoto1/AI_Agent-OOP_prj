@@ -167,10 +167,24 @@ CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/functional_evaluator.cpp -o CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s
 
+CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
+CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/harness.cpp
+CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/harness.cpp
+
+CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/harness.cpp > CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.i
+
+CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/harness.cpp -o CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.s
+
 CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/keyword_evaluator.cpp
 CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/keyword_evaluator.cpp
 
 CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.i: cmake_force
@@ -184,7 +198,7 @@ CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/trajectory.cpp
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/harness/trajectory.cpp
 
 CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.i: cmake_force
@@ -198,7 +212,7 @@ CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/calculator.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/calculator.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.i: cmake_force
@@ -212,7 +226,7 @@ CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/exec.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/exec.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.i: cmake_force
@@ -226,7 +240,7 @@ CMakeFiles/OopAgentCore.dir/src/tools/exec.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/memory_tool.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/memory_tool.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.i: cmake_force
@@ -240,7 +254,7 @@ CMakeFiles/OopAgentCore.dir/src/tools/memory_tool.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/read.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/read.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.i: cmake_force
@@ -254,7 +268,7 @@ CMakeFiles/OopAgentCore.dir/src/tools/read.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/tool_registry.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/tool_registry.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.i: cmake_force
@@ -268,7 +282,7 @@ CMakeFiles/OopAgentCore.dir/src/tools/tool_registry.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/web_tool.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/web_tool.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.i: cmake_force
@@ -282,7 +296,7 @@ CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.s: cmake_force
 CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o: CMakeFiles/OopAgentCore.dir/flags.make
 CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o: /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/write.cpp
 CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o: CMakeFiles/OopAgentCore.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o -MF CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o.d -o CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o -c /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/src/tools/write.cpp
 
 CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.i: cmake_force
@@ -302,6 +316,7 @@ OopAgentCore_OBJECTS = \
 "CMakeFiles/OopAgentCore.dir/src/harness/Native_Environment.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/harness/Sandbox_Environment.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o" \
+"CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o" \
 "CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o" \
@@ -322,6 +337,7 @@ libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/client/ollama_client.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/Native_Environment.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/Sandbox_Environment.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o
+libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/tools/calculator.cpp.o
@@ -333,7 +349,7 @@ libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/tools/web_tool.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/src/tools/write.cpp.o
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/build.make
 libOopAgentCore.a: CMakeFiles/OopAgentCore.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Linking CXX static library libOopAgentCore.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25127151/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Linking CXX static library libOopAgentCore.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/OopAgentCore.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/OopAgentCore.dir/link.txt --verbose=$(VERBOSE)
 

@@ -297,6 +297,30 @@ src/harness/functional_evaluator.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.s
 .PHONY : src/harness/functional_evaluator.cpp.s
 
+src/harness/harness.o: src/harness/harness.cpp.o
+.PHONY : src/harness/harness.o
+
+# target to build an object file
+src/harness/harness.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o
+.PHONY : src/harness/harness.cpp.o
+
+src/harness/harness.i: src/harness/harness.cpp.i
+.PHONY : src/harness/harness.i
+
+# target to preprocess a source file
+src/harness/harness.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.i
+.PHONY : src/harness/harness.cpp.i
+
+src/harness/harness.s: src/harness/harness.cpp.s
+.PHONY : src/harness/harness.s
+
+# target to generate assembly for a file
+src/harness/harness.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/OopAgentCore.dir/build.make CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.s
+.PHONY : src/harness/harness.cpp.s
+
 src/harness/keyword_evaluator.o: src/harness/keyword_evaluator.cpp.o
 .PHONY : src/harness/keyword_evaluator.o
 
@@ -543,6 +567,9 @@ help:
 	@echo "... src/harness/functional_evaluator.o"
 	@echo "... src/harness/functional_evaluator.i"
 	@echo "... src/harness/functional_evaluator.s"
+	@echo "... src/harness/harness.o"
+	@echo "... src/harness/harness.i"
+	@echo "... src/harness/harness.s"
 	@echo "... src/harness/keyword_evaluator.o"
 	@echo "... src/harness/keyword_evaluator.i"
 	@echo "... src/harness/keyword_evaluator.s"

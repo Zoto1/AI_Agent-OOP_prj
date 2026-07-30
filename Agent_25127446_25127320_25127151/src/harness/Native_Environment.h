@@ -16,7 +16,7 @@ public:
     void setup() override;
     void teardown() override;
     std::string executeCommand(const std::string& command) override;
-    
+    bool isHealthy() const override;
 
     const std::string& getWorkingDir() const { return workingDir; }
 };

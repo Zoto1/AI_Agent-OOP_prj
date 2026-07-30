@@ -13,6 +13,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/OopAgentCore.dir/src/harness/Sandbox_Environment.cpp.o.d"
   "CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o"
   "CMakeFiles/OopAgentCore.dir/src/harness/functional_evaluator.cpp.o.d"
+  "CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o"
+  "CMakeFiles/OopAgentCore.dir/src/harness/harness.cpp.o.d"
   "CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o"
   "CMakeFiles/OopAgentCore.dir/src/harness/keyword_evaluator.cpp.o.d"
   "CMakeFiles/OopAgentCore.dir/src/harness/trajectory.cpp.o"
