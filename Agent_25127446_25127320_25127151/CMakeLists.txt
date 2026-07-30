@@ -38,3 +38,6 @@ add_executable(agent_run /workspaces/AI_Agent-OOP_prj/Agent_25127446_25127320_25
 
 # Liên kết thư viện tĩnh nội bộ vào file thực thi
 target_link_libraries(agent_run PRIVATE OopAgentCore)
+
+add_executable(benchmark_run src/benchmark/run_eval.cpp)
+target_link_libraries(benchmark_run PRIVATE OopAgentCore)
