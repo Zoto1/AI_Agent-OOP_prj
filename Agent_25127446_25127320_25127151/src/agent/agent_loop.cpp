@@ -77,11 +77,15 @@ void AgentLoop::setVerbose(bool enable)
 
 std::string AgentLoop::run(const std::string &task)
 {
-    history.clear();
     step_history.clear();
 
-    Message mes_system = buildSystemMessage(task);
-    history.push_back(mes_system);
+    if (!this->conversation_started)
+    {
+        history.clear();
+        Message mes_system = buildSystemMessage(task);
+        history.push_back(mes_system);
+        this->conversation_started = true;
+    }
 
     Message user_message;
     user_message.role = "user";
@@ -102,6 +106,11 @@ std::string AgentLoop::run(const std::string &task)
         // THINK
         std::string thought = this->think();
         cur_step.thought = thought;
+
+        Message assistant_message;
+        assistant_message.role = "assistant";
+        assistant_message.content = thought;
+        this->history.push_back(assistant_message);
 
         if (this->verbose)
         {
@@ -263,7 +272,8 @@ Message AgentLoop::buildSystemMessage(const std::string &task)
         "   {\"tool\": \"<tool_name>\", \"args\": {\"<key>\": \"<value>\"}}\n"
         "2. If you already have enough info to give the final answer, "
         "respond in plain text (not JSON).\n"
-        "3. Only use tool names from the list above.\n\n";
+        "3. Only use tool names from the list above.\n"
+        "4. Keep track of previous messages in the conversation and use them for follow-up questions.\n\n";
 
     // Inject skill phù hợp với task
     if (skill_loader)

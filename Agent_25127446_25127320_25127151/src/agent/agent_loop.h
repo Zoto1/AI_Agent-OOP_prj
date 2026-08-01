@@ -23,6 +23,7 @@ protected:
 
     std::vector<Message> history;
     std::vector<Step> step_history;
+    bool conversation_started = false;
 
     const int max_steps;
 
