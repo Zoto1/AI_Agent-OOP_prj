@@ -17,5 +17,7 @@ public:
 
     static ToolRegistry& getInstance();
 
+    std::string describeToolsForPrompt() const;
+
     void registerTool(std::shared_ptr<Tool> tool);
     std::string executeTool(const std::string& name, const std::map<std::string, std::string>& args); };

@@ -22,10 +22,12 @@ protected:
     std::shared_ptr<LoopDetector> loop_detector;
 
     std::vector<Message> history;
+    std::vector<Step> step_history;
 
     const int max_steps;
 
     std::function<void(const Step &)> step_hook;
+    bool verbose = false;
 
 public:
     AgentLoop(std::shared_ptr<LLMClient> client,
@@ -36,6 +38,7 @@ public:
     virtual ~AgentLoop() = default;
 
     void setStepHook(std::function<void(const Step &)> hook);
+    void setVerbose(bool enable);
 
     std::string run(const std::string &task);
 

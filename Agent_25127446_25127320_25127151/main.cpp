@@ -13,10 +13,23 @@
 
 #include <iostream>
 #include <memory>
+#include <string>
 
 int main(int argc, char* argv[]) {
     try {
-        std::string config_path = argc > 1 ? argv[1] : "config.json";
+        bool verbose = false;
+        std::string config_path = "config.json";
+
+        for (int i = 1; i < argc; ++i) {
+            std::string arg = argv[i];
+            if (arg == "--verbose") {
+                verbose = true;
+            } else if (arg == "--config" && i + 1 < argc) {
+                config_path = argv[++i];
+            } else {
+                config_path = arg;
+            }
+        }
         LLMConfig config = ConfigLoader::loadLLMConfig(
             config_path, "gemini", "GEMINI_API_KEY");
         auto llm = std::make_shared<GeminiClient>(config);
@@ -42,7 +55,11 @@ int main(int argc, char* argv[]) {
             if (task == "exit") break;
             if (task.empty()) continue;
             AgentLoop agent(llm, registry, skills, detector, 10);
-            std::cout << agent.run(task) << "\n";
+            agent.setVerbose(verbose);
+            std::string result = agent.run(task);
+            if (!verbose) {
+                std::cout << result << "\n";
+            }
         }
         return 0;
     } catch (const std::exception& e) {
