@@ -50,14 +50,12 @@ int main(int argc, char* argv[]) {
         auto detector = std::make_shared<LoopDetector>();
 
         std::cout << "Nhap yeu cau (go 'exit' de thoat):\n";
-        AgentLoop agent(llm, registry, skills, detector, 10);
-        agent.setVerbose(verbose);
-
         std::string task;
         while (std::cout << "> " && std::getline(std::cin, task)) {
             if (task == "exit") break;
             if (task.empty()) continue;
-
+            AgentLoop agent(llm, registry, skills, detector, 10);
+            agent.setVerbose(verbose);
             std::string result = agent.run(task);
             if (!verbose) {
                 std::cout << result << "\n";

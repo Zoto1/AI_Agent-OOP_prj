@@ -21,9 +21,9 @@ protected:
     std::shared_ptr<SkillLoader> skill_loader;
     std::shared_ptr<LoopDetector> loop_detector;
 
+    
     std::vector<Message> history;
     std::vector<Step> step_history;
-    bool conversation_started = false;
 
     const int max_steps;
 
