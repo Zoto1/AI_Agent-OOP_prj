@@ -14,17 +14,31 @@ namespace fs = std::filesystem;
 NativeEnvironment::NativeEnvironment(const std::string& workingDir)
     : workingDir(workingDir) {}
 
-void NativeEnvironment::setup() {
+void NativeEnvironment::setup()
+{
     std::error_code ec;
-    fs::create_directories(workingDir, ec);
+
+    if (std::filesystem::exists(workingDir)) {
+        std::filesystem::remove_all(workingDir, ec);
+
+        if (ec) {
+            throw std::runtime_error(
+                "Khong the xoa workspace cu: " +
+                workingDir + " - " + ec.message()
+            );
+        }
+    }
+
+    std::filesystem::create_directories(workingDir, ec);
+
     if (ec) {
         throw std::runtime_error(
-            "Lỗi [NativeEnvironment]: Không thể tạo thư mục làm việc '" +
-            workingDir + "': " + ec.message());
+            "Khong the tao workspace: " +
+            workingDir + " - " + ec.message()
+        );
     }
     isSetUp = true;
 }
-
 void NativeEnvironment::teardown() {
     // Cố ý KHÔNG xóa workingDir: đây là nơi lưu output (file agent tạo ra),
     // xóa ở đây có thể làm mất kết quả mà Evaluator cần đọc sau đó.

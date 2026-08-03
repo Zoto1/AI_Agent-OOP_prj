@@ -17,7 +17,23 @@
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
+class CurrentPathGuard {
+private:
+    fs::path old_path;
 
+public:
+    explicit CurrentPathGuard(const fs::path& new_path)
+        : old_path(fs::current_path())
+    {
+        fs::current_path(new_path);
+    }
+
+    ~CurrentPathGuard()
+    {
+        std::error_code error;
+        fs::current_path(old_path, error);
+    }
+};
 HarnessRunner::HarnessRunner(std::shared_ptr<LLMClient> llm,
                               std::shared_ptr<ToolRegistry> tool_registry,
                               std::shared_ptr<SkillLoader> skill_loader,
@@ -134,89 +150,210 @@ void HarnessRunner::exportTrajectory(const Trajectory& trajectory) const {
 // Chạy 1 task: setup env -> chạy AgentLoop (qua step_hook thu thập Trajectory)
 // -> teardown env -> chấm điểm -> ghi file JSON.
 // ---------------------------------------------------------------------------
-TaskResult HarnessRunner::runTask(const TaskDefinition& task) {
+TaskResult HarnessRunner::runTask(const TaskDefinition& task)
+{
     TaskResult result;
     result.task_id = task.id;
 
     auto env = makeEnvironment(task);
 
+    // 1. Chuẩn bị workspace sạch cho task
     try {
         env->setup();
-    } catch (const std::exception& e) {
-        result.error = std::string("Lỗi setup môi trường: ") + e.what();
+    }
+    catch (const std::exception& e) {
+        result.error =
+            std::string("Loi setup moi truong: ") + e.what();
+
         return result;
     }
 
+    // 2. Khởi tạo trajectory
     Trajectory trajectory;
     trajectory.task_id = task.id;
-    trajectory.model = llm ? llm->getModelName() : "unknown";
+    trajectory.model =
+        llm ? llm->getModelName() : "unknown";
 
-    // AgentLoop KHÔNG biết HarnessRunner tồn tại (mục 4.4 đề bài): nó chỉ gọi
-    // step_hook mỗi khi có 1 Step mới, không biết ai đang lắng nghe hay để làm gì.
-    AgentLoop agent(llm, tool_registry, skill_loader, loop_detector, task.max_steps);
-    agent.setStepHook([&trajectory](const Step& step) {
-        trajectory.steps.push_back(step);
-        trajectory.total_tokens += step.tokens_used;
-    });
+    // 3. Khởi tạo AgentLoop theo max_steps của task
+    AgentLoop agent(
+        llm,
+        tool_registry,
+        skill_loader,
+        loop_detector,
+        task.max_steps
+    );
 
-    auto t0 = std::chrono::steady_clock::now();
+    // Harness thu thập từng bước thông qua step hook
+    agent.setStepHook(
+        [&trajectory](const Step& step)
+        {
+            trajectory.steps.push_back(step);
+            trajectory.total_tokens += step.tokens_used;
+        }
+    );
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    // 4. Chạy agent trong workspace riêng của task
     try {
-        agent.run(task.instruction);
-    } catch (const std::exception& e) {
-        // Task lỗi không được làm sập cả batch: ghi nhận lỗi, dọn env, trả về luôn.
-        result.error = std::string("Lỗi khi chạy agent: ") + e.what();
-        try { env->teardown(); } catch (...) {}
+        auto native_env =
+            std::dynamic_pointer_cast<NativeEnvironment>(env);
+
+        if (native_env) {
+            CurrentPathGuard path_guard(
+                native_env->getWorkingDir()
+            );
+
+            agent.run(task.instruction);
+        }
+        else {
+            agent.run(task.instruction);
+        }
+    }
+    catch (const std::exception& e) {
+        auto end_time = std::chrono::steady_clock::now();
+
+        trajectory.total_time_ms = static_cast<int>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                end_time - start_time
+            ).count()
+        );
+
+        trajectory.success = false;
+
+        result.success = false;
+        result.total_time_ms = trajectory.total_time_ms;
+        result.total_tokens = trajectory.total_tokens;
+        result.error =
+            std::string("Loi khi chay agent: ") + e.what();
+
+        // Task lỗi vẫn phải xuất trajectory
+        try {
+            exportTrajectory(trajectory);
+
+            result.trajectory_path =
+                (
+                    fs::path(output_dir) /
+                    ("trajectory_" + task.id + ".json")
+                ).string();
+        }
+        catch (const std::exception& export_error) {
+            std::cerr
+                << "Canh bao [HarnessRunner]: "
+                << export_error.what()
+                << "\n";
+        }
+
+        try {
+            env->teardown();
+        }
+        catch (...) {
+        }
+
         return result;
     }
-    auto t1 = std::chrono::steady_clock::now();
+
+    auto end_time = std::chrono::steady_clock::now();
+
     trajectory.total_time_ms = static_cast<int>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count());
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            end_time - start_time
+        ).count()
+    );
 
-    // Chấm điểm: với FunctionalEvaluator, eval_script (vd "test -f result.txt")
-    // cần chạy đúng bên trong thư mục làm việc của task, không phải cwd của
-    // tiến trình HarnessRunner -> tạm cd vào rồi cd lại, chỉ áp dụng khi
-    // Environment là NativeEnvironment (chạy thật trên host).
-    std::shared_ptr<Evaluator> evaluator;
+    // 5. Chấm điểm task
     double score = 0.0;
-    try {
-        evaluator = makeEvaluator(task);
 
-        auto native_env = std::dynamic_pointer_cast<NativeEnvironment>(env);
+    try {
+        std::shared_ptr<Evaluator> evaluator =
+            makeEvaluator(task);
+
+        auto native_env =
+            std::dynamic_pointer_cast<NativeEnvironment>(env);
+
         if (native_env && task.eval_type == "functional") {
-            fs::path prev_path = fs::current_path();
-            fs::current_path(native_env->getWorkingDir());
-            score = evaluator->evaluate(trajectory);
-            fs::current_path(prev_path);
-        } else {
+            CurrentPathGuard path_guard(
+                native_env->getWorkingDir()
+            );
+
             score = evaluator->evaluate(trajectory);
         }
-    } catch (const std::exception& e) {
-        result.error = std::string("Lỗi khi chấm điểm: ") + e.what();
-        try { env->teardown(); } catch (...) {}
+        else {
+            score = evaluator->evaluate(trajectory);
+        }
+    }
+    catch (const std::exception& e) {
+        trajectory.success = false;
+
+        result.success = false;
+        result.total_time_ms = trajectory.total_time_ms;
+        result.total_tokens = trajectory.total_tokens;
+        result.error =
+            std::string("Loi khi cham diem: ") + e.what();
+
+        // Lỗi evaluator vẫn xuất trajectory
+        try {
+            exportTrajectory(trajectory);
+
+            result.trajectory_path =
+                (
+                    fs::path(output_dir) /
+                    ("trajectory_" + task.id + ".json")
+                ).string();
+        }
+        catch (const std::exception& export_error) {
+            std::cerr
+                << "Canh bao [HarnessRunner]: "
+                << export_error.what()
+                << "\n";
+        }
+
+        try {
+            env->teardown();
+        }
+        catch (...) {
+        }
+
         return result;
     }
 
-    trajectory.success = score >= success_threshold;
+    // 6. Ghi kết quả
+    trajectory.success =
+        score >= success_threshold;
 
     result.score = score;
     result.success = trajectory.success;
     result.total_time_ms = trajectory.total_time_ms;
     result.total_tokens = trajectory.total_tokens;
 
+    // 7. Xuất trajectory JSON
     try {
         exportTrajectory(trajectory);
+
         result.trajectory_path =
-            (fs::path(output_dir) / ("trajectory_" + task.id + ".json")).string();
-    } catch (const std::exception& e) {
-        // Không ghi được file JSON không có nghĩa là task thất bại, chỉ log cảnh báo.
-        std::cerr << "Cảnh báo [HarnessRunner]: " << e.what() << "\n";
+            (
+                fs::path(output_dir) /
+                ("trajectory_" + task.id + ".json")
+            ).string();
+    }
+    catch (const std::exception& e) {
+        std::cerr
+            << "Canh bao [HarnessRunner]: "
+            << e.what()
+            << "\n";
     }
 
+    // 8. Dọn môi trường
     try {
         env->teardown();
-    } catch (const std::exception& e) {
-        std::cerr << "Cảnh báo [HarnessRunner]: lỗi teardown môi trường task '"
-                  << task.id << "': " << e.what() << "\n";
+    }
+    catch (const std::exception& e) {
+        std::cerr
+            << "Canh bao [HarnessRunner]: loi teardown task '"
+            << task.id
+            << "': "
+            << e.what()
+            << "\n";
     }
 
     return result;
