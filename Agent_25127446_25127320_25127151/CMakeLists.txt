@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 # 1. Khai báo tên dự án
 project(OopAgent VERSION 1.0 LANGUAGES CXX)
 
+# Xuất lệnh biên dịch để clangd/VS Code nhận đúng include path và chuẩn C++.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # 2. Ép chuẩn C++
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

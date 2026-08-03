@@ -1,7 +1,7 @@
 #include "harness.h"
 
 #include "Native_Environment.h"
-#include "Sandbox_Environment.h"
+
 #include "keyword_evaluator.h"
 #include "functional_evaluator.h"
 #include "../agent/agent_loop.h"
@@ -14,7 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-
+#include<unordered_set>
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 class CurrentPathGuard {
@@ -52,53 +52,211 @@ HarnessRunner::HarnessRunner(std::shared_ptr<LLMClient> llm,
 // ---------------------------------------------------------------------------
 // 7.2 Task Definition Format: đọc benchmark/tasks.json
 // ---------------------------------------------------------------------------
-std::vector<TaskDefinition> HarnessRunner::loadTasks(const std::string& tasks_json_path) const {
+std::vector<TaskDefinition> HarnessRunner::loadTasks(
+    const std::string& tasks_json_path
+) const
+{
     std::ifstream file(tasks_json_path);
-    if (!file.is_open()) {
+
+    if (!file.is_open())
+    {
         throw std::runtime_error(
-            "Lỗi [HarnessRunner]: Không mở được file benchmark: " + tasks_json_path);
+            "Loi [HarnessRunner]: Khong mo duoc file benchmark: "
+            + tasks_json_path
+        );
     }
 
-    json j;
-    try {
-        file >> j;
-    } catch (const json::parse_error& e) {
+    json task_list;
+
+    try
+    {
+        file >> task_list;
+    }
+    catch (const json::parse_error& error)
+    {
         throw std::runtime_error(
-            "Lỗi [HarnessRunner]: File tasks.json không hợp lệ (" +
-            std::string(e.what()) + ")");
+            "Loi [HarnessRunner]: File tasks.json khong hop le: "
+            + std::string(error.what())
+        );
     }
 
-    if (!j.is_array()) {
+    if (!task_list.is_array())
+    {
         throw std::runtime_error(
-            "Lỗi [HarnessRunner]: tasks.json phải là 1 mảng (array) các task.");
+            "Loi [HarnessRunner]: tasks.json phai la mot mang."
+        );
+    }
+
+    if (task_list.empty())
+    {
+        throw std::runtime_error(
+            "Loi [HarnessRunner]: tasks.json khong co task nao."
+        );
     }
 
     std::vector<TaskDefinition> tasks;
-    tasks.reserve(j.size());
+    std::unordered_set<std::string> used_ids;
 
-    for (const auto& item : j) {
-        TaskDefinition t;
-        // .value(key, default) an toàn hơn operator[]: task thiếu field tùy chọn
-        // sẽ không làm cả file load thất bại.
-        t.id = item.value("id", "");
-        t.description = item.value("description", "");
-        t.instruction = item.value("instruction", t.description);
-        t.eval_type = item.value("eval_type", "keyword");
-        t.eval_script = item.value("eval_script", "");
-        t.max_steps = item.value("max_steps", 10);
+    tasks.reserve(task_list.size());
 
-        if (item.contains("eval_keywords") && item["eval_keywords"].is_array()) {
-            for (const auto& kw : item["eval_keywords"]) {
-                t.eval_keywords.push_back(kw.get<std::string>());
+    for (std::size_t index = 0;
+         index < task_list.size();
+         ++index)
+    {
+        const json& item = task_list[index];
+
+        if (!item.is_object())
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task tai vi tri "
+                + std::to_string(index)
+                + " phai la mot object."
+            );
+        }
+
+        TaskDefinition task;
+
+        try
+        {
+            task.id = item.value("id", "");
+            task.description = item.value("description", "");
+            task.instruction = item.value("instruction", "");
+            task.eval_type = item.value("eval_type", "");
+            task.eval_script = item.value("eval_script", "");
+            task.max_steps = item.value("max_steps", 10);
+        }
+        catch (const json::type_error& error)
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Sai kieu du lieu tai task thu "
+                + std::to_string(index)
+                + ": "
+                + std::string(error.what())
+            );
+        }
+
+        // 1. Kiểm tra ID
+        if (task.id.empty())
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task thu "
+                + std::to_string(index)
+                + " thieu id."
+            );
+        }
+
+        // ID được dùng làm tên workspace nên không được chứa đường dẫn.
+        if (task.id.find("..") != std::string::npos ||
+            task.id.find('/') != std::string::npos ||
+            task.id.find('\\') != std::string::npos)
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task id khong hop le: '"
+                + task.id + "'."
+            );
+        }
+
+        // Không cho phép hai task trùng ID.
+        if (!used_ids.insert(task.id).second)
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Trung task id: '"
+                + task.id + "'."
+            );
+        }
+
+        // 2. Kiểm tra instruction
+        if (task.instruction.empty())
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task '"
+                + task.id
+                + "' thieu instruction."
+            );
+        }
+
+        // 3. Kiểm tra max_steps
+        if (task.max_steps <= 0)
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task '"
+                + task.id
+                + "' co max_steps phai lon hon 0."
+            );
+        }
+
+        // 4. Kiểm tra eval_type
+        if (task.eval_type != "keyword" &&
+            task.eval_type != "functional")
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task '"
+                + task.id
+                + "' co eval_type khong duoc ho tro: '"
+                + task.eval_type + "'."
+            );
+        }
+
+        // 5. Validation cho KeywordEvaluator
+        if (task.eval_type == "keyword")
+        {
+            if (!item.contains("eval_keywords") ||
+                !item["eval_keywords"].is_array())
+            {
+                throw std::runtime_error(
+                    "Loi [HarnessRunner]: Task '"
+                    + task.id
+                    + "' thieu mang eval_keywords."
+                );
+            }
+
+            for (const json& keyword : item["eval_keywords"])
+            {
+                if (!keyword.is_string())
+                {
+                    throw std::runtime_error(
+                        "Loi [HarnessRunner]: Task '"
+                        + task.id
+                        + "' co keyword khong phai chuoi."
+                    );
+                }
+
+                std::string value = keyword.get<std::string>();
+
+                if (value.empty())
+                {
+                    throw std::runtime_error(
+                        "Loi [HarnessRunner]: Task '"
+                        + task.id
+                        + "' co keyword rong."
+                    );
+                }
+
+                task.eval_keywords.push_back(std::move(value));
+            }
+
+            if (task.eval_keywords.empty())
+            {
+                throw std::runtime_error(
+                    "Loi [HarnessRunner]: Task '"
+                    + task.id
+                    + "' phai co it nhat mot keyword."
+                );
             }
         }
 
-        if (t.id.empty()) {
-            std::cerr << "Cảnh báo [HarnessRunner]: bỏ qua 1 task thiếu 'id' trong tasks.json\n";
-            continue;
+        // 6. Validation cho FunctionalEvaluator
+        if (task.eval_type == "functional" &&
+            task.eval_script.empty())
+        {
+            throw std::runtime_error(
+                "Loi [HarnessRunner]: Task '"
+                + task.id
+                + "' thieu eval_script."
+            );
         }
 
-        tasks.push_back(std::move(t));
+        tasks.push_back(std::move(task));
     }
 
     return tasks;
@@ -383,7 +541,38 @@ std::vector<TaskResult> HarnessRunner::runBatch(const std::string& tasks_json_pa
     printReport(results);
     return results;
 }
+TaskResult HarnessRunner::runSingleTask(
+    const std::string& tasks_json_path,
+    const std::string& task_id
+)
+{
+    const std::vector<TaskDefinition> tasks =
+        loadTasks(tasks_json_path);
 
+    for (const TaskDefinition& task : tasks)
+    {
+        if (task.id != task_id)
+        {
+            continue;
+        }
+
+        std::cout << "Dang chay task: " << task.id << '\n';
+
+        TaskResult result = runTask(task);
+
+        std::cout << "Ket qua: "
+                  << (result.success ? "PASS" : "FAIL")
+                  << '\n';
+
+        std::cout << "Xem trajectory chi tiet trong thu muc results.\n";
+
+        return result;
+    }
+
+    throw std::runtime_error(
+        "Khong tim thay task co id: " + task_id
+    );
+}
 void HarnessRunner::printReport(const std::vector<TaskResult>& results) const {
     int total = static_cast<int>(results.size());
     int passed = 0;

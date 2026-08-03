@@ -20,29 +20,70 @@
 
 int main(int argc, char* argv[])
 {
-    try {
-        // Tham số 1 là config, tham số 2 là file task
-        std::string config_path =
-            argc > 1 ? argv[1] : "config.json";
+    try
+    {
+        /*
+         * Cách dùng:
+         *
+         * Chạy toàn bộ:
+         * benchmark_run
+         * benchmark_run config.json src/benchmark/task.json
+         *
+         * Chạy một task:
+         * benchmark_run config.json src/benchmark/task.json task_007
+         */
 
-        std::string tasks_path =
-            argc > 2 ? argv[2] : "src/benchmark/task.json";
+        if (argc > 4)
+        {
+            std::cerr
+                << "Cach dung:\n"
+                << "  " << argv[0] << "\n"
+                << "  " << argv[0]
+                << " <config.json> <tasks.json>\n"
+                << "  " << argv[0]
+                << " <config.json> <tasks.json> <task_id>\n";
 
-        // Tạo Gemini client
+            return 1;
+        }
+
+        const std::string config_path =
+            argc > 1
+                ? argv[1]
+                : "config.json";
+
+        const std::string tasks_path =
+            argc > 2
+                ? argv[2]
+                : "src/benchmark/task.json";
+
+        const std::string task_id =
+            argc > 3
+                ? argv[3]
+                : "";
+
         LLMConfig config = ConfigLoader::loadLLMConfig(
             config_path,
             "gemini",
             "GEMINI_API_KEY"
         );
 
-        auto llm = std::make_shared<GeminiClient>(config);
+        auto llm =
+            std::make_shared<GeminiClient>(config);
 
-        // Đăng ký các tool
-        ToolRegistry& singleton = ToolRegistry::getInstance();
+        ToolRegistry& singleton =
+            ToolRegistry::getInstance();
 
-        singleton.registerTool(std::make_shared<CalculatorTool>());
-        singleton.registerTool(std::make_shared<ExecTool>());
-        singleton.registerTool(std::make_shared<FileReadTool>("./"));
+        singleton.registerTool(
+            std::make_shared<CalculatorTool>()
+        );
+
+        singleton.registerTool(
+            std::make_shared<ExecTool>()
+        );
+
+        singleton.registerTool(
+            std::make_shared<FileReadTool>("./")
+        );
 
         singleton.registerTool(
             std::make_shared<FileWriteTool>(
@@ -52,21 +93,28 @@ int main(int argc, char* argv[])
             )
         );
 
-        singleton.registerTool(std::make_shared<Memory>());
-        singleton.registerTool(std::make_shared<WebSearchTool>());
+        singleton.registerTool(
+            std::make_shared<Memory>()
+        );
 
-        // shared_ptr không sở hữu singleton
+        singleton.registerTool(
+            std::make_shared<WebSearchTool>()
+        );
+
+        // shared_ptr không sở hữu singleton.
         auto registry = std::shared_ptr<ToolRegistry>(
             &singleton,
             [](ToolRegistry*) {}
         );
 
-        auto skills = std::make_shared<SkillLoader>("src/skills");
+        auto skills =
+            std::make_shared<SkillLoader>("src/skills");
+
         skills->load_skills();
 
-        auto detector = std::make_shared<LoopDetector>();
+        auto detector =
+            std::make_shared<LoopDetector>();
 
-        // Tạo Harness
         HarnessRunner runner(
             llm,
             registry,
@@ -77,16 +125,35 @@ int main(int argc, char* argv[])
             1.0
         );
 
-        std::cout << "Dang chay benchmark: "
-                  << tasks_path << "\n";
+        if (!task_id.empty())
+        {
+            std::cout
+                << "Dang chay mot task: "
+                << task_id << "\n";
 
-        runner.runBatch(tasks_path);
+            runner.runSingleTask(
+                tasks_path,
+                task_id
+            );
+        }
+        else
+        {
+            std::cout
+                << "Dang chay toan bo benchmark: "
+                << tasks_path << "\n";
+
+            runner.runBatch(tasks_path);
+        }
 
         return 0;
     }
-    catch (const std::exception& e) {
-        std::cerr << "Loi Harness: "
-                  << e.what() << "\n";
+    catch (const std::exception& error)
+    {
+        std::cerr
+            << "Loi Harness: "
+            << error.what()
+            << "\n";
+
         return 1;
     }
 }

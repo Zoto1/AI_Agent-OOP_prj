@@ -68,9 +68,12 @@ public:
                   std::string workspace_root = "workspace/",
                   double success_threshold = 1.0);
 
-    // Chạy 1 task đơn lẻ, trả kết quả + tự ghi file trajectory JSON ra output_dir/
     TaskResult runTask(const TaskDefinition& task);
 
+     TaskResult runSingleTask(
+        const std::string& tasks_json_path,
+        const std::string& task_id
+    );
     // Chạy toàn bộ benchmark/tasks.json, cô lập lỗi từng task (1 task lỗi không sập cả batch)
     std::vector<TaskResult> runBatch(const std::string& tasks_json_path);
 
