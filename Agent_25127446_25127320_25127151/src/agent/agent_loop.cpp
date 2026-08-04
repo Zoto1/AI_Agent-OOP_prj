@@ -46,7 +46,7 @@ namespace
                 args["value"] = parsed.dump();
             }
         }
-        catch (const json::parse_error &)
+        catch (const json::exception &)
         {
             args["input"] = raw_args;
         }
@@ -107,6 +107,11 @@ std::string AgentLoop::run(const std::string &task)
         {
             std::cout << thought << std::endl;
         }
+
+        Message assistant_message;
+        assistant_message.role = "assistant";
+        assistant_message.content = thought;
+        this->history.push_back(assistant_message);
 
         // ACT
         cur_step.action = this->act(thought);
@@ -172,6 +177,8 @@ std::string AgentLoop::run(const std::string &task)
             this->observe(result);
             cur_step.tool_result = result;
 
+            this->step_history.back().tool_result = result;
+
             if (this->step_hook)
             {
                 this->step_hook(cur_step);
@@ -179,7 +186,8 @@ std::string AgentLoop::run(const std::string &task)
         }
     }
 
-    return "Kết quả cuối cùng của AI (Final Answer)";
+    return "[RUN_OUT_OF_STEPS] Agent stopped: reached max_steps (" +
+           std::to_string(max_steps) + ") without producing a final answer.";
 }
 
 void AgentLoop::observe(const std::string &tool_result)
@@ -211,13 +219,12 @@ AgentLoop::act(const std::string &thought)
 }
 std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
 {
-    // Tìm đoạn JSON trong response (LLM có thể kèm text giải thích trước/sau JSON)
     size_t start = response.find('{');
     size_t end = response.rfind('}');
 
     if (start == std::string::npos || end == std::string::npos || end < start)
     {
-        return std::nullopt; // Không thấy JSON -> không phải tool call
+        return std::nullopt;
     }
 
     std::string jsonStr = response.substr(start, end - start + 1);
@@ -226,24 +233,29 @@ std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
     {
         json parsed = json::parse(jsonStr);
 
-        if (!parsed.contains("tool") || !parsed.contains("args"))
+        if (!parsed.is_object() || !parsed.contains("tool") || !parsed.contains("args"))
         {
-            return std::nullopt; // Thiếu field bắt buộc -> không coi là tool call
+            return std::nullopt;
+        }
+
+        if (!parsed.at("tool").is_string())
+        {
+            return std::nullopt;
         }
 
         ToolCall call;
         call.tool = parsed.at("tool").get<std::string>();
 
-        // args có thể là string hoặc object tùy tool, chuẩn hóa về string
         call.args = parsed.at("args").is_string()
                         ? parsed.at("args").get<std::string>()
                         : parsed.at("args").dump();
 
         return call;
     }
-    catch (const json::parse_error &)
+    catch (const json::exception &)
     {
-        return std::nullopt; // JSON lỗi -> coi như final answer, không throw
+
+        return std::nullopt;
     }
 }
 
