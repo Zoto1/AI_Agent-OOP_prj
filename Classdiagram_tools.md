@@ -1,60 +1,64 @@
-# Thiết kế Class Diagram cho hệ thống Tool 
-> **Người thực hiện:** Nguyễn Ngọc Anh Thư - 25127151
-
----
-## 1. Tổng quan (Overview)
-*Mô tả các Tools Agent.*
-## 2. Sơ đồ lớp (Class Diagram)
-
-```mermaid
 classDiagram
-    %% Top to Bottom: class cha/ class quản lí nằm phía trên các class con
-    direction TB
     class ToolRegistry {
-        - tools: map
-        + register_tool(tool: Tool) bool
-        + execute_tool(name: string, args: Map) string
+        - tools: map~string, shared_ptr~Tool~~
+        - ToolRegistry()
+        + registerTool(tool: shared_ptr~Tool~) void
+        + executeTool(name: string, args: map~string, string~) string
+        + getInstance()$ ToolRegistry&
     }
+
     class Tool {
         <<abstract>>
-        +name: string
-        +description: string
-        +excute (args: Map) strings
+        # name: string
+        # description: string
+        + Tool(n: string, d: string)
+        + ~Tool()
+        + execute(args: map~string, string~) string*
+        + getName() string
+        + getDescription() string
     }
 
-    %% Các bộ công cụ thực thi kế thừa từ Tool
-    class ExecTool {- timeout: int
-        - allowed_languages: List
-        + run_script(code: String) String
+    class ExecTool {
+        + ExecTool()
+        + execute(args: map~string, string~) string {override}
     }
-   class FileTool {
-        - base_directory: String
-        + read_file(path: String) String
-        + write_file(path: String, content: String) boolean
+
+    class FileReadTool {
+        - base_directory: string
+        + FileReadTool(base_dir: string)
+        + execute(args: map~string, string~) string {override}
+    }
+
+    class FileWriteTool {
+        - base_directory: string
+        + FileWriteTool(n: string, d: string, base_dir: string)
+        + execute(args: map~string, string~) string {override}
     }
 
     class WebSearchTool {
-        - api_key: String
-        - max_results: int
-        + search(query: String) List
-        + fetch_page_content(url: String) String
+        - performSearchRequest(query: string) string
+        + WebSearchTool()
+        + execute(args: map~string, string~) string {override}
     }
 
     class MemoryTool {
-        - storage_path: String
-        + save_context(key: String, value: String) boolean
-        + load_context(query: String) String
+        - storage_path: string
+        + MemoryTool()
+        + save_context(key: string, value: string) bool
+        + load_context(query: string) string
+        + execute(args: map~string, string~) string {override}
     }
 
     class CalculatorTool {
-        - precision: int
-        + parse_expression(expression: String) double
+        + CalculatorTool()
+        + execute(args: map~string, string~) string {override}
     }
+
     %% Mối quan hệ giữa các Class
     ToolRegistry "1" o-- "*" Tool : Manages
     Tool <|-- ExecTool : Inherits
-    Tool <|-- FileTool : Inherits
+    Tool <|-- FileWriteTool : Inherits
+    Tool <|-- FileReadTool : Inherits
     Tool <|-- WebSearchTool : Inherits
     Tool <|-- MemoryTool : Inherits
     Tool <|-- CalculatorTool : Inherits
-```

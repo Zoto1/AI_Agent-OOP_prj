@@ -9,4 +9,4 @@ class ExecTool : public Tool {
 public:
     ExecTool();
 
-    std::string execute(const std::map<std::string, std::string>& args) override;};
+    std::string execute(const std::map<std::string, std::string>& args) override;};  
