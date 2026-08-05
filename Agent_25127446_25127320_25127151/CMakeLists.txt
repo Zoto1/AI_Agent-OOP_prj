@@ -1,46 +1,159 @@
 cmake_minimum_required(VERSION 3.10)
 
-# 1. Khai báo tên dự án
+# ==================================================
+# Project
+# ==================================================
 project(OopAgent VERSION 1.0 LANGUAGES CXX)
 
-# Xuất lệnh biên dịch để clangd/VS Code nhận đúng include path và chuẩn C++.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# 2. Ép chuẩn C++
+# ==================================================
+# C++ Standard
+# ==================================================
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# 3. Tìm các thư viện bên thứ 3 (Dependencies)
+# ==================================================
+# Dependencies
+# ==================================================
 find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-# 4. Chỉ định thư mục chứa file header (.h)
+# ==================================================
+# Include
+# ==================================================
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# 5. Gom nhóm mã nguồn từ các module thành một Static Library
-# Gom toàn bộ file .cpp trong các thư mục con
-file(GLOB_RECURSE SRC_FILES 
+# ==================================================
+# Source files
+# ==================================================
+file(GLOB_RECURSE SRC_FILES
     "src/agent/*.cpp"
     "src/client/*.cpp"
     "src/tools/*.cpp"
     "src/harness/*.cpp"
 )
 
-# Tạo thư viện tĩnh từ mã nguồn
-add_library(OopAgentCore STATIC ${SRC_FILES})
+# ==================================================
+# Core Library
+# ==================================================
+add_library(OopAgentCore STATIC
+    ${SRC_FILES}
+)
 
-# Liên kết thư viện bên thứ ba vào thư viện tĩnh của dự án
-target_link_libraries(OopAgentCore PUBLIC 
-    CURL::libcurl 
+target_link_libraries(
+    OopAgentCore
+    PUBLIC
+    CURL::libcurl
     nlohmann_json::nlohmann_json
 )
 
-# 6. Tạo file thực thi chính (Executable)
-add_executable(agent_run main.cpp)
+# ==================================================
+# Main executable
+# ==================================================
+add_executable(
+    agent_run
+    main.cpp
+)
 
-# Liên kết thư viện tĩnh nội bộ vào file thực thi
-target_link_libraries(agent_run PRIVATE OopAgentCore)
+target_link_libraries(
+    agent_run
+    PRIVATE
+    OopAgentCore
+)
 
-add_executable(benchmark_run src/benchmark/run_eval.cpp)
-target_link_libraries(benchmark_run PRIVATE OopAgentCore)
+# ==================================================
+# Benchmark executable
+# ==================================================
+add_executable(
+    benchmark_run
+    src/benchmark/run_eval.cpp
+)
+
+target_link_libraries(
+    benchmark_run
+    PRIVATE
+    OopAgentCore
+)
+
+# ==================================================
+# Testing
+# ==================================================
+enable_testing()
+
+# --------------------------------------------------
+# Keyword Evaluator
+# --------------------------------------------------
+add_executable(
+    test_keyword_evaluator
+    src/tests/test_keyword_evaluator.cpp
+)
+
+target_link_libraries(
+    test_keyword_evaluator
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME KeywordEvaluatorTest
+    COMMAND test_keyword_evaluator
+)
+
+# --------------------------------------------------
+# Functional Evaluator
+# --------------------------------------------------
+add_executable(
+    test_functional_evaluator
+    src/tests/test_functional_evaluator.cpp
+)
+
+target_link_libraries(
+    test_functional_evaluator
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME FunctionalEvaluatorTest
+    COMMAND test_functional_evaluator
+)
+
+# --------------------------------------------------
+# Trajectory
+# --------------------------------------------------
+add_executable(
+    test_trajectory
+    src/tests/test_trajectory.cpp
+)
+
+target_link_libraries(
+    test_trajectory
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME TrajectoryTest
+    COMMAND test_trajectory
+)
+
+# --------------------------------------------------
+# Termination Status
+# --------------------------------------------------
+add_executable(
+    test_termination_status
+    src/tests/test_termination_status.cpp
+)
+
+target_link_libraries(
+    test_termination_status
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME TerminationStatusTest
+    COMMAND test_termination_status
+)
