@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <variant>
+#include <regex>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -75,7 +76,7 @@ void AgentLoop::setVerbose(bool enable)
     this->verbose = enable;
 }
 
-std::string AgentLoop::run(const std::string &task)
+AgentRunResult AgentLoop::run(const std::string &task)
 {
     history.clear();
     step_history.clear();
@@ -122,12 +123,19 @@ std::string AgentLoop::run(const std::string &task)
             LoopResult loop_result = this->loop_detector->detect(this->step_history);
             if (loop_result.type != LoopType::NONE)
             {
-                std::cerr << "[LoopDetector] " << loop_result.message << "\n";
-                if (this->step_hook)
+                if (loop_result.sev == LoopSeverity::CRITICAL)
                 {
-                    this->step_hook(cur_step);
+                    std::cerr << "[LoopDetector] " << loop_result.message << "\n";
+                    if (this->step_hook)
+                    {
+                        this->step_hook(cur_step);
+                    }
+                    return {"", AgentTerminationStatus::LoopDetected};
                 }
-                return "Agent stopped because the loop detector flagged a repeating pattern.";
+                else
+                {
+                    std::cerr << "[LoopDetector WARNING] " << loop_result.message << "\n";
+                }
             }
         }
 
@@ -143,7 +151,7 @@ std::string AgentLoop::run(const std::string &task)
             {
                 this->step_hook(cur_step);
             }
-            return answer.text;
+            return {answer.text, AgentTerminationStatus::Completed};
         }
 
         if (std::holds_alternative<ToolCall>(cur_step.action))
@@ -183,11 +191,20 @@ std::string AgentLoop::run(const std::string &task)
             {
                 this->step_hook(cur_step);
             }
+            // Re-run loop detection after tool result is available
+            if (this->loop_detector)
+            {
+                LoopResult post_loop_result = this->loop_detector->detect(this->step_history);
+                if (post_loop_result.type != LoopType::NONE && post_loop_result.sev == LoopSeverity::CRITICAL)
+                {
+                    std::cerr << "[LoopDetector] " << post_loop_result.message << "\n";
+                    return {"", AgentTerminationStatus::LoopDetected};
+                }
+            }
         }
     }
 
-    return "[RUN_OUT_OF_STEPS] Agent stopped: reached max_steps (" +
-           std::to_string(max_steps) + ") without producing a final answer.";
+    return {"", AgentTerminationStatus::MaxStepsReached};
 }
 
 void AgentLoop::observe(const std::string &tool_result)
@@ -200,9 +217,18 @@ void AgentLoop::observe(const std::string &tool_result)
 
 std::string AgentLoop::think()
 {
-
-    std::string response = llm->chat(history);
-    return response;
+    try
+    {
+        return llm->chat(history);
+    }
+    catch (const APIEnvironmentError &e)
+    {
+        throw std::runtime_error(std::string("API_ENVIRONMENT_ERROR: ") + e.what());
+    }
+    catch (const LLMClientError &e)
+    {
+        throw std::runtime_error(std::string("LLM_CLIENT_ERROR: ") + e.what());
+    }
 }
 
 std::variant<ToolCall, FinalAnswer>
@@ -219,15 +245,208 @@ AgentLoop::act(const std::string &thought)
 }
 std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
 {
-    size_t start = response.find('{');
-    size_t end = response.rfind('}');
+    auto trim = [](const std::string &s) {
+        const std::string ws = " \t\n\r";
+        size_t a = s.find_first_not_of(ws);
+        if (a == std::string::npos)
+            return std::string();
+        size_t b = s.find_last_not_of(ws);
+        return s.substr(a, b - a + 1);
+    };
 
-    if (start == std::string::npos || end == std::string::npos || end < start)
+    auto extractJsonObject = [&](const std::string &text) -> std::optional<std::string> {
+        bool in_string = false;
+        bool escape = false;
+        int depth = 0;
+        size_t start = std::string::npos;
+
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            char c = text[i];
+            if (escape)
+            {
+                escape = false;
+                continue;
+            }
+            if (c == '\\')
+            {
+                if (in_string)
+                {
+                    escape = true;
+                }
+                continue;
+            }
+            if (c == '"')
+            {
+                in_string = !in_string;
+                continue;
+            }
+            if (in_string)
+            {
+                continue;
+            }
+            if (c == '{')
+            {
+                if (depth == 0)
+                {
+                    start = i;
+                }
+                depth++;
+            }
+            else if (c == '}' && depth > 0)
+            {
+                depth--;
+                if (depth == 0 && start != std::string::npos)
+                {
+                    return text.substr(start, i - start + 1);
+                }
+            }
+        }
+        return std::nullopt;
+    };
+
+    auto repairJson = [&](std::string text) -> std::string {
+        // Convert single quotes to double quotes outside strings
+        bool in_string = false;
+        bool escape = false;
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            char c = text[i];
+            if (escape)
+            {
+                escape = false;
+                continue;
+            }
+            if (c == '\\')
+            {
+                escape = true;
+                continue;
+            }
+            if (c == '"')
+            {
+                in_string = !in_string;
+                continue;
+            }
+            if (!in_string && c == '\'')
+            {
+                text[i] = '"';
+            }
+        }
+
+        // Quote bare object keys like {tool: and "tool":
+        std::regex keyRegex(R"(([\{\[,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:)" );
+        text = std::regex_replace(text, keyRegex, "$1\"$2\":");
+
+        // Quote bare string values such as : foo, but not numbers or booleans/null
+        std::regex bareStringValue(R"((:\s*)(?!true\b|false\b|null\b|[-0-9\.])([A-Za-z_][A-Za-z0-9_]*)(\s*(?:,|\}|\]|\n|$)))");
+        text = std::regex_replace(text, bareStringValue, "$1\"$2\"$3");
+        text = std::regex_replace(text, bareStringValue, "$1\"$2\"$3");
+
+        // Remove trailing commas before object/array close
+        std::regex trailingComma(R"(,\s*([\}\]]))");
+        text = std::regex_replace(text, trailingComma, "$1");
+
+        return text;
+    };
+
+    std::string resp = trim(response);
+    std::string jsonStr;
+
+    auto normalizeJsonQuotes = [&](std::string text) -> std::string {
+        bool in_string = false;
+        bool escape = false;
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            char c = text[i];
+            if (escape)
+            {
+                escape = false;
+                continue;
+            }
+            if (c == '\\')
+            {
+                escape = true;
+                continue;
+            }
+            if (c == '"')
+            {
+                in_string = !in_string;
+                continue;
+            }
+            if (!in_string && c == '\'')
+            {
+                text[i] = '"';
+            }
+        }
+        return text;
+    };
+
+    auto parseFenceContent = [&](const std::string &block) -> std::optional<std::string> {
+        std::string trimmed_block = trim(block);
+        if (trimmed_block.rfind("json", 0) == 0)
+        {
+            size_t nl = trimmed_block.find('\n');
+            if (nl != std::string::npos)
+            {
+                trimmed_block = trim(trimmed_block.substr(nl + 1));
+            }
+        }
+
+        auto candidate = extractJsonObject(trimmed_block);
+        if (candidate.has_value())
+        {
+            return candidate;
+        }
+
+        if (trimmed_block.find("tool") != std::string::npos &&
+            trimmed_block.find("args") != std::string::npos)
+        {
+            std::string repaired = normalizeJsonQuotes(trimmed_block);
+            return extractJsonObject(repaired);
+        }
+
+        return std::nullopt;
+    };
+
+    size_t fence_start = resp.find("```");
+    while (fence_start != std::string::npos)
+    {
+        size_t fence_end = resp.find("```", fence_start + 3);
+        if (fence_end == std::string::npos)
+            break;
+
+        auto result = parseFenceContent(resp.substr(fence_start + 3, fence_end - (fence_start + 3)));
+        if (result.has_value())
+        {
+            jsonStr = result.value();
+            break;
+        }
+
+        fence_start = resp.find("```", fence_end + 3);
+    }
+
+    if (jsonStr.empty())
+    {
+        std::optional<std::string> candidate = extractJsonObject(resp);
+        if (!candidate.has_value() && resp.find("tool") != std::string::npos && resp.find("args") != std::string::npos)
+        {
+            std::string repaired = repairJson(resp);
+            candidate = extractJsonObject(repaired);
+            if (!candidate.has_value())
+            {
+                candidate = repaired;
+            }
+        }
+        if (candidate.has_value())
+        {
+            jsonStr = candidate.value();
+        }
+    }
+
+    if (jsonStr.empty())
     {
         return std::nullopt;
     }
-
-    std::string jsonStr = response.substr(start, end - start + 1);
 
     try
     {
@@ -254,7 +473,6 @@ std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
     }
     catch (const json::exception &)
     {
-
         return std::nullopt;
     }
 }
@@ -271,11 +489,15 @@ Message AgentLoop::buildSystemMessage(const std::string &task)
 
     content +=
         "## Response rules (MUST FOLLOW):\n"
-        "1. To call a tool, respond with ONLY a JSON object, no other text:\n"
-        "   {\"tool\": \"<tool_name>\", \"args\": {\"<key>\": \"<value>\"}}\n"
-        "2. If you already have enough info to give the final answer, "
-        "respond in plain text (not JSON).\n"
-        "3. Only use tool names from the list above.\n\n";
+        "1. If you need a tool to answer the task, respond with ONLY a JSON object and nothing else.\n"
+        "   Example: {\"tool\": \"calculator\", \"args\": {\"input\": \"128 / 8\"}}\n"
+        "2. Do not include any analysis, plan, or explanation outside the JSON object when calling a tool.\n"
+        "3. Use only tool names from the list above.\n"
+        "4. If the task requires side effects (file write, exec, memory, web search, etc.), you must call the appropriate tool instead of returning a plain-text answer.\n"
+        "5. If the task is a calculation, ALWAYS use the calculator tool and do not provide a numeric result directly.\n"
+        "6. If the task involves writing, reading, shell execution, memory, or internet search, do not answer directly; call the tool instead.\n"
+        "7. If you are unsure whether the task needs a tool, prefer tooling and do not return the answer directly.\n"
+        "8. If you already have enough information to give the final answer without calling a tool, return the final answer in plain text only.\n\n";
 
     // Inject skill phù hợp với task
     if (skill_loader)

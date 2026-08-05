@@ -58,9 +58,15 @@ int main(int argc, char* argv[]) {
             if (task == "exit") break;
             if (task.empty()) continue;
 
-            std::string result = agent.run(task);
+            AgentRunResult result = agent.run(task);
             if (!verbose) {
-                std::cout << result << "\n";
+                if (result.status == AgentTerminationStatus::Completed) {
+                    std::cout << result.final_answer << "\n";
+                } else {
+                    std::cout << "[Agent terminated with status: "
+                              << agentTerminationStatusToString(result.status)
+                              << "]\n";
+                }
             }
         }
         return 0;
