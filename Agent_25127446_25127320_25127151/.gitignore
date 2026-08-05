@@ -18,6 +18,7 @@ workspace/*
 
 # Config
 config.local.json
+config.json
 
 # IDE
 .vscode/

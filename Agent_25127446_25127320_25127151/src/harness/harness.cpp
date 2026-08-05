@@ -649,32 +649,90 @@ catch (const std::exception& error)
 return results;
 }
 
-TaskResult HarnessRunner::runSingleTask(const std::string &tasks_json_path,
-                                        const std::string &task_id) {
-  // Xoa trajectory cu cua task truoc khi chay lai. Neu lan chay moi dung
-  // som, file ket qua cua lan truoc se khong bi hieu nham la ket qua moi.
-  fs::create_directories(output_dir);
-  fs::remove(fs::path(output_dir) / ("trajectory_" + task_id + ".json"));
+TaskResult HarnessRunner::runSingleTask(
+    const std::string& tasks_json_path,
+    const std::string& task_id
+)
+{
+    fs::create_directories(output_dir);
 
-  const std::vector<TaskDefinition> tasks = loadTasks(tasks_json_path);
+    fs::remove(
+        fs::path(output_dir) /
+        ("trajectory_" + task_id + ".json")
+    );
 
-  for (const TaskDefinition &task : tasks) {
-    if (task.id != task_id) {
-      continue;
+    const std::vector<TaskDefinition> tasks =
+        loadTasks(tasks_json_path);
+
+    for (const TaskDefinition& task : tasks)
+    {
+        if (task.id != task_id)
+        {
+            continue;
+        }
+
+        std::cout
+            << "Dang chay task: "
+            << task.id
+            << " - "
+            << task.description
+            << '\n';
+
+        TaskResult result = runTask(task);
+
+        std::cout
+            << "\n========== KET QUA TASK ==========\n";
+
+        std::cout
+            << "Task ID    : "
+            << result.task_id
+            << '\n';
+
+        std::cout
+            << "Trang thai : "
+            << (result.success ? "PASS" : "FAIL")
+            << '\n';
+
+        std::cout
+            << "Score      : "
+            << result.score
+            << '\n';
+
+        std::cout
+            << "Thoi gian  : "
+            << result.total_time_ms
+            << " ms\n";
+
+        std::cout
+            << "Tokens     : "
+            << result.total_tokens
+            << '\n';
+
+        if (!result.trajectory_path.empty())
+        {
+            std::cout
+                << "Trajectory : "
+                << result.trajectory_path
+                << '\n';
+        }
+
+        if (result.error.has_value())
+        {
+            std::cout
+                << "Loi        : "
+                << result.error.value()
+                << '\n';
+        }
+
+        std::cout
+            << "==================================\n";
+
+        return result;
     }
 
-    std::cout << "Dang chay task: " << task.id << '\n';
-
-    TaskResult result = runTask(task);
-
-    std::cout << "Ket qua: " << (result.success ? "PASS" : "FAIL") << '\n';
-
-    std::cout << "Xem trajectory chi tiet trong thu muc results.\n";
-
-    return result;
-  }
-
-  throw std::runtime_error("Khong tim thay task co id: " + task_id);
+    throw std::runtime_error(
+        "Khong tim thay task co id: " + task_id
+    );
 }
 void HarnessRunner::printReport(const std::vector<TaskResult> &results) const {
   int total = static_cast<int>(results.size());
