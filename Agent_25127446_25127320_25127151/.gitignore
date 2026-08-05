@@ -1,10 +1,33 @@
+# Build
 build/
+out/
+
+# CMake
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
+compile_commands.json
 Makefile
-*.o
-*.a
+
+# Benchmark
+results/*
+!results/.gitkeep
+
+workspace/*
+!workspace/.gitkeep
+
+# Config
+config.local.json
+
+# IDE
 .vscode/
 .idea/
-config.json
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

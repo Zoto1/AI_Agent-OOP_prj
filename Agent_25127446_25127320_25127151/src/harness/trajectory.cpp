@@ -1,60 +1,76 @@
 #include "trajectory.h"
+
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
-std::string Trajectory::toJson() const {
-    // 1. Tạo "chiếc hộp to" chứa thông tin chung của Trajectory
-    json j_trajectory;
-    j_trajectory["task_id"] = task_id;
-    j_trajectory["model"] = model;
-    j_trajectory["success"] = success;
-    j_trajectory["total_tokens"] = total_tokens;
-    j_trajectory["total_time_ms"] = total_time_ms;
+json toJson(const ToolCall& tool_call)
+{
+    return {
+        {"type", "tool_call"},
+        {"tool", tool_call.tool},
+        {"args", tool_call.args}
+    };
+}
 
-    // 2. Tạo "ngăn kéo" mảng để chứa danh sách các bước (Đã thêm đúng dòng bạn từng bị thiếu)
-    json j_steps = json::array(); 
+json toJson(const FinalAnswer& final_answer)
+{
+    return {
+        {"type", "final_answer"},
+        {"text", final_answer.text}
+    };
+}
 
-    // 3. Duyệt qua từng bước trong biến vector
-    for (const auto& step : steps) {
-        json j_step;
-        j_step["step_id"] = step.step_id;
-        j_step["thought"] = step.thought;
-        
-        // 4. Xử lý std::variant cho biến action bằng std::visit
-        json j_action;
-        std::visit([&j_action](auto&& arg) {
-            //const ToolCall || &FinalAnswer
-            using T = std::decay_t<decltype(arg)>;
-            //Arg ToolCall  
-            
-            // Nếu action đang chứa ToolCall
-            if constexpr (std::is_same_v<T, ToolCall>) {
-                j_action["type"] = arg.type;
-                j_action["tool"] = arg.tool;
-                j_action["args"] = arg.args;
-            } 
-            // Nếu action đang chứa FinalAnswer
-            else if constexpr (std::is_same_v<T, FinalAnswer>) {
-                j_action["type"] = arg.type;
-                j_action["text"] = arg.text;
-            }
-        }, step.action);
-        
-        // Bỏ action vào trong step
-        j_step["action"] = j_action;
-        
-        j_step["tool_result"] = step.tool_result;
-        j_step["tokens_used"] = step.tokens_used;
-        j_step["latency_ms"] = step.latency_ms;
-        
-        // Nhét step này vào danh sách j_steps
-        j_steps.push_back(j_step);
+json toJson(const Step& step)
+{
+    json action_json;
+
+    std::visit(
+        [&action_json](const auto& action)
+        {
+            action_json = toJson(action);
+        },
+        step.action
+    );
+
+    return {
+        {"step_id", step.step_id},
+        {"thought", step.thought},
+        {"action", action_json},
+        {"tool_result", step.tool_result},
+        {"tokens_used", step.tokens_used},
+        {"latency_ms", step.latency_ms}
+    };
+}
+
+json toJson(const Trajectory& trajectory)
+{
+    json steps_json = json::array();
+
+    for (const Step& step : trajectory.steps)
+    {
+        steps_json.push_back(toJson(step));
     }
-    
-    // 5. Gắn mảng steps vào trong hộp to trajectory
-    j_trajectory["steps"] = j_steps;
-    
-    // 6. Chuyển đổi toàn bộ thành chuỗi text, thụt lề 4 dấu cách cho đẹp
-    return j_trajectory.dump(4);
+
+    return {
+        {"task_id", trajectory.task_id},
+        {"model", trajectory.model},
+        {"success", trajectory.success},
+        {"total_tokens", trajectory.total_tokens},
+        {"total_time_ms", trajectory.total_time_ms},
+        {"final_answer", trajectory.final_answer},
+        {
+            "termination_status",
+            terminationStatusToString(
+                trajectory.termination_status
+            )
+        },
+        {
+            "error",
+            trajectory.error_message.empty()
+                ? json(nullptr)
+                : json(trajectory.error_message)
+        },
+        {"steps", steps_json}
+    };
 }
