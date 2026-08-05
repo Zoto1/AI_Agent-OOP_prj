@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <iomanip>
+#include <stdexcept>
 
 using json = nlohmann::json;
 
@@ -184,13 +185,13 @@ std::string GeminiClient::sendRequest(const std::string &jsonBody) const
     {
         // Bao gồm cả timeout (CURLE_OPERATION_TIMEDOUT) và
         // connection refused (CURLE_COULDNT_CONNECT).
-        throw std::runtime_error(
+        throw APIEnvironmentError(
             std::string("GeminiClient: loi ket noi - ") + curl_easy_strerror(res));
     }
 
     if (httpStatus < 200 || httpStatus >= 300)
     {
-        throw std::runtime_error(
+        throw APIEnvironmentError(
             "GeminiClient: HTTP status " + std::to_string(httpStatus) +
             ", body: " + responseBuffer);
     }
@@ -219,7 +220,7 @@ std::string GeminiClient::parseResponse(const std::string &rawJson) const
     }
     catch (const json::parse_error &e)
     {
-        throw std::runtime_error(
+        throw LLMClientError(
             std::string("GeminiClient: JSON response khong hop le - ") + e.what());
     }
 
@@ -236,12 +237,12 @@ std::string GeminiClient::parseResponse(const std::string &rawJson) const
         {
             message = parsed["error"].value("message", "unknown error");
         }
-        throw std::runtime_error("GeminiClient: Gemini tra ve loi - " + message);
+        throw LLMClientError("GeminiClient: Gemini tra ve loi - " + message);
     }
 
     if (!parsed.contains("candidates") || !parsed["candidates"].is_array() || parsed["candidates"].empty())
     {
-        throw std::runtime_error("GeminiClient: response thieu candidates hoac candidates rong");
+        throw LLMClientError("GeminiClient: response thieu candidates hoac candidates rong");
     }
 
     try

@@ -10,8 +10,38 @@
 
 class LLMClient;
 class ToolRegistry;
-class SkillLoader; // chưa có
+class SkillLoader; 
 class LoopDetector;
+
+enum class AgentTerminationStatus {
+    Completed,
+    LoopDetected,
+    MaxStepsReached,
+};
+
+struct AgentRunResult {
+    std::string final_answer;
+    AgentTerminationStatus status = AgentTerminationStatus::MaxStepsReached;
+
+    operator std::string() const
+    {
+        return final_answer;
+    }
+};
+
+inline std::string agentTerminationStatusToString(
+    AgentTerminationStatus status)
+{
+    switch (status) {
+    case AgentTerminationStatus::Completed:
+        return "Completed";
+    case AgentTerminationStatus::LoopDetected:
+        return "LoopDetected";
+    case AgentTerminationStatus::MaxStepsReached:
+        return "MaxStepsReached";
+    }
+    return "Unknown";
+}
 
 class AgentLoop
 {
@@ -41,7 +71,7 @@ public:
     void setStepHook(std::function<void(const Step &)> hook);
     void setVerbose(bool enable);
 
-    std::string run(const std::string &task);
+    AgentRunResult run(const std::string &task);
 
 protected:
     virtual void observe(const std::string &tool_result);

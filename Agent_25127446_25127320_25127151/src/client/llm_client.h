@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <stdexcept>
 
 struct LLMConfig
 {
@@ -18,6 +19,18 @@ struct Message
 {
     std::string role; // "system", "user", "assistant"
     std::string content;
+};
+
+struct LLMException : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+struct APIEnvironmentError : LLMException {
+    using LLMException::LLMException;
+};
+
+struct LLMClientError : LLMException {
+    using LLMException::LLMException;
 };
 
 class LLMClient

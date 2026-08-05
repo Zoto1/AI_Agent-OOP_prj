@@ -1,4 +1,5 @@
 #include "loop_detector.h"
+#include <iostream>
 #include <type_traits>
 
 LoopDetector::LoopDetector(int warning_thresh, int critical_thresh)
@@ -20,7 +21,11 @@ bool LoopDetector::isSameAction(const std::variant<ToolCall, FinalAnswer> &a,
                           {
                               if constexpr (std::is_same_v<T1, ToolCall>)
                               {
-                                  return arg_a.tool == arg_b.tool && arg_a.args == arg_b.args;
+                                 bool same = (arg_a.tool == arg_b.tool && arg_a.args == arg_b.args);
+                                 if (!same) {
+                                     std::cerr << "[LoopDetector DEBUG] ToolCall mismatch: '" << arg_a.tool << "'('" << arg_a.args << "') vs '" << arg_b.tool << "'('" << arg_b.args << "')\n";
+                                 }
+                                 return same;
                               }
                               else if constexpr (std::is_same_v<T1, FinalAnswer>)
                               {
@@ -31,6 +36,25 @@ bool LoopDetector::isSameAction(const std::variant<ToolCall, FinalAnswer> &a,
                       },
                       a, b);
 }
+
+bool LoopDetector::isSameStep(const Step &a, const Step &b)
+{
+    // First compare action types and contents
+    if (!isSameAction(a.action, b.action))
+        return false;
+
+    // For tool calls, we can only confirm a true repeat after observing results.
+    // If either result is missing, avoid false positives by not declaring the steps identical yet.
+    if (std::holds_alternative<ToolCall>(a.action) && std::holds_alternative<ToolCall>(b.action))
+    {
+        if (a.tool_result.empty() || b.tool_result.empty())
+            return false;
+        return a.tool_result == b.tool_result;
+    }
+
+    // For final answers, compare the action content directly.
+    return true;
+}
 // A A A A A A A A 
 std::optional<LoopSeverity> LoopDetector::checkGenericRepeat(const std::vector<Step> &history) const
 {
@@ -38,11 +62,11 @@ std::optional<LoopSeverity> LoopDetector::checkGenericRepeat(const std::vector<S
         return std::nullopt;
 
     int count = 1;
-    const auto &last_action = history.back().action;
+    const auto &last_step = history.back();
 
     for (auto it = history.rbegin() + 1; it != history.rend(); ++it)
     {
-        if (isSameAction(it->action, last_action))
+        if (isSameStep(*it, last_step))
         {
             count++;
         }
@@ -55,7 +79,10 @@ std::optional<LoopSeverity> LoopDetector::checkGenericRepeat(const std::vector<S
     if (count >= _critical)
         return LoopSeverity::CRITICAL;
     if (count >= _warning)
+    {
+        std::cerr << "[LoopDetector DEBUG] generic repeat count=" << count << " (warning_threshold=" << _warning << ", critical=" << _critical << ")\n";
         return LoopSeverity::WARNING;
+    }
 
     return std::nullopt;
 }
@@ -69,10 +96,10 @@ std::optional<LoopSeverity> LoopDetector::checkPingPong(const std::vector<Step> 
         return std::nullopt;
     }
 
-    const auto &action_A = history[n - 1].action;
-    const auto &action_B = history[n - 2].action;
+    const auto &step_A = history[n - 1];
+    const auto &step_B = history[n - 2];
 
-    if (isSameAction(action_A, action_B))
+    if (isSameStep(step_A, step_B))
     {
         return std::nullopt;
     }
@@ -81,8 +108,8 @@ std::optional<LoopSeverity> LoopDetector::checkPingPong(const std::vector<Step> 
 
     for (int i = n - 1; i >= 1; i -= 2)
     {
-        if (isSameAction(history[i].action, action_A) &&
-            isSameAction(history[i - 1].action, action_B))
+        if (isSameStep(history[i], step_A) &&
+            isSameStep(history[i - 1], step_B))
         {
             count++;
         }
@@ -105,21 +132,38 @@ LoopResult LoopDetector::detect(const std::vector<Step> &history) const
     LoopResult result = {LoopType::NONE, LoopSeverity::NORMAL, "Agent running normally."};
 
     auto generic_severity = checkGenericRepeat(history);
-    if (generic_severity.has_value())
+    auto pingpong_severity = checkPingPong(history);
+
+    if (!generic_severity.has_value() && !pingpong_severity.has_value())
     {
-        result.type = LoopType::GENERIC_REPEAT;
-        result.sev = generic_severity.value();
-        result.message = "Generic Repeat Detected: Agent keeps repeating the same action.";
         return result;
     }
 
-    auto pingpong_severity = checkPingPong(history);
-    if (pingpong_severity.has_value())
+    if (generic_severity.has_value() && pingpong_severity.has_value())
     {
-        result.type = LoopType::PING_PONG;
+        if (generic_severity.value() == LoopSeverity::CRITICAL ||
+            pingpong_severity.value() == LoopSeverity::CRITICAL)
+        {
+            result.sev = LoopSeverity::CRITICAL;
+            result.type = (generic_severity.value() == LoopSeverity::CRITICAL)
+                              ? LoopType::GENERIC_REPEAT
+                              : LoopType::PING_PONG;
+        }
+        else
+        {
+            result.sev = LoopSeverity::WARNING;
+            result.type = LoopType::GENERIC_REPEAT;
+        }
+    }
+    else if (generic_severity.has_value())
+    {
+        result.sev = generic_severity.value();
+        result.type = LoopType::GENERIC_REPEAT;
+    }
+    else
+    {
         result.sev = pingpong_severity.value();
-        result.message = "Ping-Pong Detected: Agent is stuck in an alternating loop.";
-        return result;
+        result.type = LoopType::PING_PONG;
     }
 
     return result;
