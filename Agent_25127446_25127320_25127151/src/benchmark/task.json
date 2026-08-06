@@ -2,9 +2,9 @@
   {
     "id": "task_001",
     "description": "[DE] Tinh toan don gian - chi dung calculator",
-    "instruction": "Tinh 128 chia cho 8 bang bao nhieu?",
-    "eval_type": "keyword",
-    "eval_keywords": ["16"],
+    "instruction": "Tinh 128 chia cho 8, sau do luu ket qua vao result.txt",
+"eval_type": "functional",
+"eval_script": "test -f result.txt && grep -q '16' result.txt",
     "max_steps": 5
   },
   {
