@@ -2,7 +2,7 @@
 #include "tool_registry.h"
 
 Memory::Memory() 
-    : Tool("memory", "Luu va lay ngu canh bo nho nguoi dung"), storage_path(path) {}
+    : Tool("memory", "Luu va lay ngu canh bo nho nguoi dung") {}
 std::string Memory::execute(const std::map<std::string, std::string>& args) {
     auto it = args.find("action");
     if (it == args.end()) {
@@ -32,7 +32,7 @@ bool Memory::save_context(const std::string& key, const std::string& value) {
     memory_data [key] = value;
     return true; 
 }
-std::optional<std::string> Memory::load_context(const std::string& query) { // check lai ham nay
+std::optional<std::string> Memory::load_context(const std::string& query) const { // check lai ham nay
     auto found = memory_data.find(query);
     if (found != memory_data.end()) {
         return found->second;

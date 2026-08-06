@@ -7,7 +7,7 @@
 #include <unordered_map>
 class Memory: public Tool{
 private:
-    std::unordered_map<std::string, std::string> memory_ data;
+    std::unordered_map<std::string, std::string> memory_data;
     bool save_context (const std:: string &key, const std:: string &value );
     // const_de doc thoi, khong sua len nen co dung tham chieu cung duoc
     std :: optional<std::string> load_context (const std::string &query) const;
