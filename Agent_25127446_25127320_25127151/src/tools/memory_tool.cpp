@@ -1,11 +1,8 @@
 #include "memory_tool.h"
 #include "tool_registry.h"
-#include <iostream>
 
-Memory::Memory(const std::string& path) 
+Memory::Memory() 
     : Tool("memory", "Luu va lay ngu canh bo nho nguoi dung"), storage_path(path) {}
-
-// Hàm execute nhận lệnh từ registry tool
 std::string Memory::execute(const std::map<std::string, std::string>& args) {
     auto it = args.find("action");
     if (it == args.end()) {
@@ -31,17 +28,21 @@ std::string Memory::execute(const std::map<std::string, std::string>& args) {
     return "Loi: Hanh dong '" + action + "' khong hop le!";
 }
 bool Memory::save_context(const std::string& key, const std::string& value) {
-    std::cout << "[Memory] Dang luu: " << key << " -> " << value << " vao " << storage_path << "\n";
+    if (key.empty()) return false;
+    memory_data [key] = value;
     return true; 
 }
 std::optional<std::string> Memory::load_context(const std::string& query) { // check lai ham nay
-    bool tim_thay = false;
-    
-    if (tim_thay) {
-        return "Nội dung tìm thấy"; 
+    auto found = memory_data.find(query);
+    if (found != memory_data.end()) {
+        return found->second;
     }
-    return std::nullopt; // nhãn không tìm thấy 
+    return std::nullopt;
 }
+void clear_memory() {
+    memory_data.clear();
+}
+
 void Memory::init(){
     auto instance = std::make_shared<Memory>();
     ToolRegistry::getInstance().registerTool(instance);}
