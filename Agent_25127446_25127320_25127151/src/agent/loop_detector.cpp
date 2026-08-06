@@ -22,9 +22,7 @@ bool LoopDetector::isSameAction(const std::variant<ToolCall, FinalAnswer> &a,
                               if constexpr (std::is_same_v<T1, ToolCall>)
                               {
                                  bool same = (arg_a.tool == arg_b.tool && arg_a.args == arg_b.args);
-                                 if (!same) {
-                                     std::cerr << "[LoopDetector DEBUG] ToolCall mismatch: '" << arg_a.tool << "'('" << arg_a.args << "') vs '" << arg_b.tool << "'('" << arg_b.args << "')\n";
-                                 }
+                                 
                                  return same;
                               }
                               else if constexpr (std::is_same_v<T1, FinalAnswer>)
