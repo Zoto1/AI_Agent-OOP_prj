@@ -25,7 +25,7 @@
   },
   {
     "id": "task_004",
-    "description": "[DE] Lay thoi gian hien tai cua may",
+    "description": "[DE] Lay thoi gian hien tai cua may theo gio viet nam",
     "instruction": "Dung tool exec chay lenh 'date' de lay thoi gian hien tai cua he thong, luu ket qua vao file time.txt",
     "eval_type": "functional",
     "eval_script": "test -s time.txt",

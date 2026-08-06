@@ -27,7 +27,8 @@ std::string WebSearchTool::performSearchRequest(const std::string& query) {
 std::string WebSearchTool::execute(const std::map<std::string, std::string>& args) {
     auto it = args.find("query");
     if (it == args.end()) {
-        return "Error: Missing 'query' parameter!";
+        return "Error: Missing 'url' parameter!";
     }
-    return performSearchRequest(it->second);
+    std::string url = it->second;
+    return "Fetched content from " + url;
 }
