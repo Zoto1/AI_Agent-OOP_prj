@@ -22,6 +22,7 @@ enum class AgentTerminationStatus {
 struct AgentRunResult {
     std::string final_answer;
     AgentTerminationStatus status = AgentTerminationStatus::MaxStepsReached;
+    long long total_tokens = 0;
 
     operator std::string() const
     {
@@ -75,10 +76,12 @@ public:
 
 protected:
     virtual void observe(const std::string &tool_result);
-    virtual std::string think();
-    virtual std::variant<ToolCall, FinalAnswer> act(const std::string &thought);
+    virtual LLMResponse think();
+    virtual std::optional<std::variant<ToolCall, FinalAnswer>>
+    act(const std::string &thought);
 
 private:
     std::optional<ToolCall> parseToolCall(const std::string &response);
+    std::optional<FinalAnswer> parseFinalAnswer(const std::string &response);
     Message buildSystemMessage(const std::string &task);
 };

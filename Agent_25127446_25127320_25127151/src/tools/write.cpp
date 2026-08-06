@@ -3,7 +3,24 @@
 #include <iostream>
 #include <fstream>
     FileWriteTool::FileWriteTool(const std::string& n, const std::string& d, const std::string& base_dir)
-        : Tool(n, d), base_directory(base_dir) {
+        : Tool(
+              n,
+              d,
+              {
+                  {"type", "OBJECT"},
+                  {"properties", {
+                      {"path", {
+                          {"type", "STRING"},
+                          {"description", "Relative path inside the task workspace"}
+                      }},
+                      {"content", {
+                          {"type", "STRING"},
+                          {"description", "Complete text content to write"}
+                      }}
+                  }},
+                  {"required", {"path", "content"}}
+              }),
+          base_directory(base_dir) {
         if (!base_directory.empty() && base_directory.back() != '/' && base_directory.back() != '\\') {
             base_directory += "/";
         }

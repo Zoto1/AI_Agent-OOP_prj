@@ -2,7 +2,23 @@
 #include "tool_registry.h"
 
 Memory::Memory() 
-    : Tool("memory", "Luu va lay ngu canh bo nho nguoi dung") {}
+    : Tool(
+          "memory",
+          "Save or load an in-memory value. For save use action, key, value. For load use action, query.",
+          {
+              {"type", "OBJECT"},
+              {"properties", {
+                  {"action", {
+                      {"type", "STRING"},
+                      {"enum", {"save", "load"}},
+                      {"description", "Operation to perform"}
+                  }},
+                  {"key", {{"type", "STRING"}, {"description", "Key used by save"}}},
+                  {"value", {{"type", "STRING"}, {"description", "Value used by save"}}},
+                  {"query", {{"type", "STRING"}, {"description", "Key used by load"}}}
+              }},
+              {"required", {"action"}}
+          }) {}
 std::string Memory::execute(const std::map<std::string, std::string>& args) {
     auto it = args.find("action");
     if (it == args.end()) {

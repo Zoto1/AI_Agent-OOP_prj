@@ -18,6 +18,23 @@
 #include <unordered_set>
 using json = nlohmann::json;
 namespace fs = std::filesystem;
+
+namespace
+{
+TerminationStatus toTrajectoryStatus(AgentTerminationStatus status)
+{
+  switch (status) {
+  case AgentTerminationStatus::Completed:
+    return TerminationStatus::Completed;
+  case AgentTerminationStatus::LoopDetected:
+    return TerminationStatus::LoopDetected;
+  case AgentTerminationStatus::MaxStepsReached:
+    return TerminationStatus::MaxStepsReached;
+  }
+  return TerminationStatus::Unknown;
+}
+}
+
 class CurrentPathGuard {
 private:
   fs::path old_path;
@@ -389,6 +406,7 @@ TaskResult HarnessRunner::runTask(
      */
     try
     {
+        AgentRunResult agent_result;
         auto native_env =
             std::dynamic_pointer_cast<
                 NativeEnvironment
@@ -400,21 +418,17 @@ TaskResult HarnessRunner::runTask(
                 native_env->getWorkingDir()
             );
 
-            trajectory.final_answer =
-                agent.run(task.instruction);
+            agent_result = agent.run(task.instruction);
         }
         else
         {
-            trajectory.final_answer =
-                agent.run(task.instruction);
+            agent_result = agent.run(task.instruction);
         }
 
-        /*
-         * AgentLoop hiện chỉ trả string nên Harness
-         * chỉ biết rằng run() đã kết thúc bình thường.
-         */
+        trajectory.final_answer = agent_result.final_answer;
+        trajectory.total_tokens = agent_result.total_tokens;
         trajectory.termination_status =
-            TerminationStatus::Completed;
+            toTrajectoryStatus(agent_result.status);
     }
     catch (const std::exception& error)
     {
@@ -485,7 +499,8 @@ TaskResult HarnessRunner::runTask(
         }
 
         result.success =
-            result.score >= success_threshold;
+            result.score >= success_threshold &&
+            trajectory.termination_status == TerminationStatus::Completed;
 
         trajectory.success =
             result.success;
@@ -531,15 +546,6 @@ TaskResult HarnessRunner::runTask(
      * 6. Ghi thời gian và token
      */
     updateElapsedTime();
-
-    /*
-     * Completed vẫn có thể success=false.
-     *
-     * Ví dụ Agent chạy xong bình thường nhưng evaluator
-     * đánh giá kết quả không đạt.
-     */
-    trajectory.termination_status =
-        TerminationStatus::Completed;
 
     /*
      * 7. Xuất trajectory

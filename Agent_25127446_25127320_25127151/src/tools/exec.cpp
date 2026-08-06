@@ -9,7 +9,19 @@
 #define PCLOSE pclose
 
 ExecTool::ExecTool()
-    : Tool("exec", "Chạy lệnh terminal hệ thống.") {}
+    : Tool(
+          "exec",
+          "Run a terminal command in the current task workspace. Args: command.",
+          {
+              {"type", "OBJECT"},
+              {"properties", {
+                  {"command", {
+                      {"type", "STRING"},
+                      {"description", "Shell command to execute"}
+                  }}
+              }},
+              {"required", {"command"}}
+          }) {}
 
 std::string ExecTool::execute(const std::map<std::string, std::string>& args) {
     if (args.find("command") == args.end()) {

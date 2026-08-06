@@ -1,6 +1,19 @@
 #include "web_tool.h"
 
-WebSearchTool::WebSearchTool() : Tool("web_search", "Tim kiem thong tin bang tu khoa va tra ve ket qua tra cuu."){}
+WebSearchTool::WebSearchTool()
+    : Tool(
+          "web_search",
+          "Search for information using a text query. Args: query.",
+          {
+              {"type", "OBJECT"},
+              {"properties", {
+                  {"query", {
+                      {"type", "STRING"},
+                      {"description", "Search query"}
+                  }}
+              }},
+              {"required", {"query"}}
+          }) {}
 
 std::string WebSearchTool::performSearchRequest(const std::string& query) {
     std::ostringstream response;
@@ -12,10 +25,9 @@ std::string WebSearchTool::performSearchRequest(const std::string& query) {
 }
 
 std::string WebSearchTool::execute(const std::map<std::string, std::string>& args) {
-    auto it = args.find("url");
+    auto it = args.find("query");
     if (it == args.end()) {
-        return "Error: Missing 'url' parameter!";
+        return "Error: Missing 'query' parameter!";
     }
-    std::string url = it->second;
-    return "Fetched content from " + url;
+    return performSearchRequest(it->second);
 }

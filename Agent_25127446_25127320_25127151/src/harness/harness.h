@@ -30,7 +30,7 @@ struct TaskResult {
   bool success = false;
   double score = 0.0;
   long long total_time_ms = 0;
-  int total_tokens = 0;
+  long long total_tokens = 0;
   std::string trajectory_path;
   std::optional<std::string>
       error; // có giá trị nếu task bị lỗi khi chạy (không chấm điểm được)

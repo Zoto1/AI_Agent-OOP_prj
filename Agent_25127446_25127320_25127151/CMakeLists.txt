@@ -157,3 +157,41 @@ add_test(
     NAME TerminationStatusTest
     COMMAND test_termination_status
 )
+
+# --------------------------------------------------
+# Agent tool-call integration
+# --------------------------------------------------
+add_executable(
+    test_agent_tool_call
+    src/tests/test_agent_tool_call.cpp
+)
+
+target_link_libraries(
+    test_agent_tool_call
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME AgentToolCallTest
+    COMMAND test_agent_tool_call
+)
+
+# --------------------------------------------------
+# Gemini multipart/function-call parsing
+# --------------------------------------------------
+add_executable(
+    test_gemini_response
+    src/tests/test_gemini_response.cpp
+)
+
+target_link_libraries(
+    test_gemini_response
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME GeminiResponseTest
+    COMMAND test_gemini_response
+)

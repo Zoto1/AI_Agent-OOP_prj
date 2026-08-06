@@ -2,10 +2,11 @@
 #include "loop_detector.h"
 #include "../tools/tool_registry.h"
 #include "skill_loader.h"
+#include <chrono>
 #include <iostream>
 #include <map>
-#include <variant>
 #include <regex>
+#include <variant>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -54,6 +55,151 @@ namespace
 
         return args;
     }
+
+    std::optional<json> parseJsonObjectFromResponse(const std::string &response)
+    {
+        const std::string whitespace = " \t\n\r";
+        const std::size_t first = response.find_first_not_of(whitespace);
+        if (first == std::string::npos)
+        {
+            return std::nullopt;
+        }
+
+        std::string candidate = response.substr(first);
+        if (candidate.rfind("```", 0) == 0)
+        {
+            const std::size_t first_newline = candidate.find('\n');
+            const std::size_t closing_fence = candidate.rfind("```");
+            if (first_newline != std::string::npos &&
+                closing_fence != std::string::npos &&
+                closing_fence > first_newline)
+            {
+                candidate = candidate.substr(
+                    first_newline + 1,
+                    closing_fence - first_newline - 1);
+            }
+        }
+
+        bool in_string = false;
+        bool escaped = false;
+        int depth = 0;
+        std::size_t object_start = std::string::npos;
+
+        for (std::size_t index = 0; index < candidate.size(); ++index)
+        {
+            const char character = candidate[index];
+            if (escaped)
+            {
+                escaped = false;
+                continue;
+            }
+            if (character == '\\' && in_string)
+            {
+                escaped = true;
+                continue;
+            }
+            if (character == '"')
+            {
+                in_string = !in_string;
+                continue;
+            }
+            if (in_string)
+            {
+                continue;
+            }
+            if (character == '{')
+            {
+                if (depth == 0)
+                {
+                    object_start = index;
+                }
+                ++depth;
+            }
+            else if (character == '}' && depth > 0)
+            {
+                --depth;
+                if (depth == 0 && object_start != std::string::npos)
+                {
+                    try
+                    {
+                        json parsed = json::parse(candidate.substr(
+                            object_start, index - object_start + 1));
+                        if (parsed.is_object())
+                        {
+                            return parsed;
+                        }
+                    }
+                    catch (const json::exception &)
+                    {
+                        return std::nullopt;
+                    }
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    std::string escapeControlCharactersInJsonStrings(const std::string &text)
+    {
+        static constexpr char hex_digits[] = "0123456789abcdef";
+        std::string sanitized;
+        sanitized.reserve(text.size());
+
+        bool in_string = false;
+        bool escaped = false;
+
+        for (const char character : text)
+        {
+            if (escaped)
+            {
+                sanitized.push_back(character);
+                escaped = false;
+                continue;
+            }
+
+            if (character == '\\' && in_string)
+            {
+                sanitized.push_back(character);
+                escaped = true;
+                continue;
+            }
+
+            if (character == '"')
+            {
+                sanitized.push_back(character);
+                in_string = !in_string;
+                continue;
+            }
+
+            const auto byte = static_cast<unsigned char>(character);
+            if (in_string && byte < 0x20)
+            {
+                sanitized += "\\u00";
+                sanitized.push_back(hex_digits[(byte >> 4) & 0x0f]);
+                sanitized.push_back(hex_digits[byte & 0x0f]);
+                continue;
+            }
+
+            sanitized.push_back(character);
+        }
+
+        return sanitized;
+    }
+
+    bool looksLikeStructuredActionAttempt(const std::string &response)
+    {
+        const std::size_t first = response.find_first_not_of(" \t\n\r");
+        if (first == std::string::npos)
+        {
+            return false;
+        }
+
+        return response[first] == '{' ||
+               response.compare(first, 3, "```") == 0 ||
+               response.find("\"tool\"") != std::string::npos ||
+               response.find("tool_call") != std::string::npos;
+    }
 } // namespace
 
 // CONSTURCTOR
@@ -89,6 +235,9 @@ AgentRunResult AgentLoop::run(const std::string &task)
     user_message.content = task;
     history.push_back(user_message);
 
+    bool has_executed_tool = false;
+    long long run_total_tokens = 0;
+
     for (int i = 0; i < this->max_steps; ++i)
     {
         Step cur_step;
@@ -101,7 +250,46 @@ AgentRunResult AgentLoop::run(const std::string &task)
         }
 
         // THINK
-        std::string thought = this->think();
+        const auto think_started = std::chrono::steady_clock::now();
+        LLMResponse model_response = this->think();
+        cur_step.tokens_used = model_response.usage.total_tokens;
+        run_total_tokens += model_response.usage.total_tokens;
+        cur_step.latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - think_started)
+                                  .count();
+
+        std::optional<std::variant<ToolCall, FinalAnswer>> parsed_action;
+        const bool native_tool_call = model_response.tool_call.has_value();
+        std::string thought;
+
+        if (native_tool_call)
+        {
+            const LLMToolCall &native_call = *model_response.tool_call;
+            ToolCall call{native_call.name, native_call.args};
+            parsed_action = call;
+            thought = json({
+                {"type", "tool_call"},
+                {"tool", call.tool},
+                {"args", json::parse(call.args)}
+            }).dump();
+        }
+        else
+        {
+            thought = model_response.text;
+            parsed_action = this->act(thought);
+
+            // A native function-calling provider normally returns plain text
+            // after a tool result. Treat that text as final only after at least
+            // one real tool execution; before then, prose is a protocol error.
+            if (!parsed_action.has_value() &&
+                has_executed_tool &&
+                !thought.empty() &&
+                !looksLikeStructuredActionAttempt(thought))
+            {
+                parsed_action = FinalAnswer{thought};
+            }
+        }
+
         cur_step.thought = thought;
 
         if (this->verbose)
@@ -112,10 +300,38 @@ AgentRunResult AgentLoop::run(const std::string &task)
         Message assistant_message;
         assistant_message.role = "assistant";
         assistant_message.content = thought;
+        if (native_tool_call)
+        {
+            const LLMToolCall &native_call = *model_response.tool_call;
+            assistant_message.kind = MessageKind::FunctionCall;
+            assistant_message.tool_name = native_call.name;
+            assistant_message.tool_args = native_call.args;
+            assistant_message.tool_call_id = native_call.id;
+            assistant_message.thought_signature = native_call.thought_signature;
+        }
         this->history.push_back(assistant_message);
 
+        if (!parsed_action.has_value())
+        {
+            Message correction;
+            correction.role = "user";
+            correction.content =
+                "FORMAT_ERROR: Your previous response was only a plan or used an invalid format. "
+                "Act now. Call one of the declared functions. If native function calling is unavailable, "
+                "return ONLY {\"type\":\"tool_call\",\"tool\":\"tool_name\",\"args\":{...}}. "
+                "If the task is completely finished, return ONLY "
+                "{\"type\":\"final_answer\",\"answer\":\"...\"}.";
+            this->history.push_back(correction);
+
+            if (this->verbose)
+            {
+                std::cout << "[FORMAT ERROR] Model output was not an action; retrying.\n";
+            }
+            continue;
+        }
+
         // ACT
-        cur_step.action = this->act(thought);
+        cur_step.action = *parsed_action;
         this->step_history.push_back(cur_step);
 
         if (this->loop_detector)
@@ -125,12 +341,12 @@ AgentRunResult AgentLoop::run(const std::string &task)
             {
                 if (loop_result.sev == LoopSeverity::CRITICAL)
                 {
-                    std::cerr << "[LoopDetector] " << loop_result.message << "\n";
                     if (this->step_hook)
                     {
                         this->step_hook(cur_step);
                     }
-                    return {"", AgentTerminationStatus::LoopDetected};
+                    return {"", AgentTerminationStatus::LoopDetected,
+                            run_total_tokens};
                 }
                 else
                 {
@@ -151,7 +367,8 @@ AgentRunResult AgentLoop::run(const std::string &task)
             {
                 this->step_hook(cur_step);
             }
-            return {answer.text, AgentTerminationStatus::Completed};
+            return {answer.text, AgentTerminationStatus::Completed,
+                    run_total_tokens};
         }
 
         if (std::holds_alternative<ToolCall>(cur_step.action))
@@ -168,8 +385,16 @@ AgentRunResult AgentLoop::run(const std::string &task)
 
             if (this->tool_registry)
             {
-                const auto args = parseToolArgs(tool_call.args);
-                result = this->tool_registry->executeTool(tool_call.tool, args);
+                if (!this->tool_registry->hasTool(tool_call.tool))
+                {
+                    result = "Error: unknown tool '" + tool_call.tool +
+                             "'. Use an exact name from Available tools.";
+                }
+                else
+                {
+                    const auto args = parseToolArgs(tool_call.args);
+                    result = this->tool_registry->executeTool(tool_call.tool, args);
+                }
             }
             else
             {
@@ -182,7 +407,22 @@ AgentRunResult AgentLoop::run(const std::string &task)
                           << result << std::endl;
             }
 
-            this->observe(result);
+            if (native_tool_call)
+            {
+                const LLMToolCall &native_call = *model_response.tool_call;
+                Message tool_message;
+                tool_message.role = "user";
+                tool_message.content = result;
+                tool_message.kind = MessageKind::FunctionResponse;
+                tool_message.tool_name = native_call.name;
+                tool_message.tool_call_id = native_call.id;
+                this->history.push_back(tool_message);
+            }
+            else
+            {
+                this->observe("Tool result for '" + tool_call.tool + "': " + result);
+            }
+            has_executed_tool = true;
             cur_step.tool_result = result;
 
             this->step_history.back().tool_result = result;
@@ -198,13 +438,14 @@ AgentRunResult AgentLoop::run(const std::string &task)
                 if (post_loop_result.type != LoopType::NONE && post_loop_result.sev == LoopSeverity::CRITICAL)
                 {
                     std::cerr << "[LoopDetector] " << post_loop_result.message << "\n";
-                    return {"", AgentTerminationStatus::LoopDetected};
+                    return {"", AgentTerminationStatus::LoopDetected,
+                            run_total_tokens};
                 }
             }
         }
     }
 
-    return {"", AgentTerminationStatus::MaxStepsReached};
+    return {"", AgentTerminationStatus::MaxStepsReached, run_total_tokens};
 }
 
 void AgentLoop::observe(const std::string &tool_result)
@@ -215,11 +456,14 @@ void AgentLoop::observe(const std::string &tool_result)
     this->history.push_back(tool_message);
 }
 
-std::string AgentLoop::think()
+LLMResponse AgentLoop::think()
 {
     try
     {
-        return llm->chat(history);
+        const std::string declarations = tool_registry
+                                             ? tool_registry->functionDeclarationsJson()
+                                             : std::string("[]");
+        return llm->chatWithTools(history, declarations);
     }
     catch (const APIEnvironmentError &e)
     {
@@ -231,17 +475,20 @@ std::string AgentLoop::think()
     }
 }
 
-std::variant<ToolCall, FinalAnswer>
+std::optional<std::variant<ToolCall, FinalAnswer>>
 AgentLoop::act(const std::string &thought)
 {
     if (auto tool_call = this->parseToolCall(thought))
     {
-        return *tool_call;
+        return std::variant<ToolCall, FinalAnswer>(*tool_call);
     }
 
-    FinalAnswer answer;
-    answer.text = thought;
-    return answer;
+    if (auto final_answer = this->parseFinalAnswer(thought))
+    {
+        return std::variant<ToolCall, FinalAnswer>(*final_answer);
+    }
+
+    return std::nullopt;
 }
 std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
 {
@@ -450,7 +697,10 @@ std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
 
     try
     {
-        json parsed = json::parse(jsonStr);
+        // Models occasionally place a literal newline/tab inside a quoted JSON
+        // value. JSON requires those control characters to be escaped.
+        json parsed = json::parse(
+            escapeControlCharactersInJsonStrings(jsonStr));
 
         if (!parsed.is_object() || !parsed.contains("tool") || !parsed.contains("args"))
         {
@@ -477,6 +727,32 @@ std::optional<ToolCall> AgentLoop::parseToolCall(const std::string &response)
     }
 }
 
+std::optional<FinalAnswer>
+AgentLoop::parseFinalAnswer(const std::string &response)
+{
+    const auto parsed = parseJsonObjectFromResponse(response);
+    if (!parsed.has_value())
+    {
+        return std::nullopt;
+    }
+
+    const std::string type = parsed->value("type", "");
+    if (!type.empty() && type != "final_answer")
+    {
+        return std::nullopt;
+    }
+
+    for (const char *field : {"answer", "final_answer", "text"})
+    {
+        if (parsed->contains(field) && parsed->at(field).is_string())
+        {
+            return FinalAnswer{parsed->at(field).get<std::string>()};
+        }
+    }
+
+    return std::nullopt;
+}
+
 Message AgentLoop::buildSystemMessage(const std::string &task)
 {
     std::string content = "You are an agent. Task: " + task + "\n\n";
@@ -489,15 +765,16 @@ Message AgentLoop::buildSystemMessage(const std::string &task)
 
     content +=
         "## Response rules (MUST FOLLOW):\n"
-        "1. If you need a tool to answer the task, respond with ONLY a JSON object and nothing else.\n"
-        "   Example: {\"tool\": \"calculator\", \"args\": {\"input\": \"128 / 8\"}}\n"
-        "2. Do not include any analysis, plan, or explanation outside the JSON object when calling a tool.\n"
-        "3. Use only tool names from the list above.\n"
-        "4. If the task requires side effects (file write, exec, memory, web search, etc.), you must call the appropriate tool instead of returning a plain-text answer.\n"
-        "5. If the task is a calculation, ALWAYS use the calculator tool and do not provide a numeric result directly.\n"
-        "6. If the task involves writing, reading, shell execution, memory, or internet search, do not answer directly; call the tool instead.\n"
-        "7. If you are unsure whether the task needs a tool, prefer tooling and do not return the answer directly.\n"
-        "8. If you already have enough information to give the final answer without calling a tool, return the final answer in plain text only.\n\n";
+        "1. ACT; never return a plan, internal reasoning, or a promise to call a tool.\n"
+        "2. Prefer the API's native function call mechanism. Use exact tool names and arguments from the schemas above.\n"
+        "3. If native function calling is unavailable, a tool action must be ONLY this JSON shape:\n"
+        "   {\"type\":\"tool_call\",\"tool\":\"calculator\",\"args\":{\"expression\":\"128 / 8\"}}\n"
+        "4. A completed task must be ONLY this JSON shape:\n"
+        "   {\"type\":\"final_answer\",\"answer\":\"The completed result\"}\n"
+        "5. Calculations MUST use calculator. Never calculate mentally or return a numeric result before calculator runs.\n"
+        "6. File operations, shell commands, memory operations, and searches MUST execute the matching tools.\n"
+        "7. After every tool result, either call the next required tool or return the final_answer JSON.\n"
+        "8. Do not put JSON in Markdown fences and do not add text outside the JSON fallback.\n\n";
 
     // Inject skill phù hợp với task
     if (skill_loader)

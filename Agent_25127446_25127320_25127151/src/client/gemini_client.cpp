@@ -2,9 +2,13 @@
 
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <algorithm>
+#include <chrono>
+#include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <stdexcept>
+#include <thread>
 
 using json = nlohmann::json;
 
@@ -93,7 +97,8 @@ std::string GeminiClient::buildEndpointUrl() const
 //   - generationConfig chứa temperature / maxOutputTokens lấy từ _config.
 // ------------------------------------------------------------------
 std::string GeminiClient::buildRequestBody(const std::vector<Message> &messages,
-                                            const std::vector<std::string> &images) const
+                                            const std::vector<std::string> &images,
+                                            const std::string &function_declarations_json) const
 {
     json body;
     json contents = json::array();
@@ -111,7 +116,47 @@ std::string GeminiClient::buildRequestBody(const std::vector<Message> &messages,
 
         json entry;
         entry["role"] = (msg.role == "assistant") ? "model" : "user";
-        entry["parts"] = json::array({{{"text", msg.content}}});
+
+        if (msg.kind == MessageKind::FunctionCall)
+        {
+            json args = json::object();
+            if (!msg.tool_args.empty())
+            {
+                args = json::parse(msg.tool_args);
+            }
+
+            json function_call = {
+                {"name", msg.tool_name},
+                {"args", args}
+            };
+            if (!msg.tool_call_id.empty())
+            {
+                function_call["id"] = msg.tool_call_id;
+            }
+
+            json part = {{"functionCall", function_call}};
+            if (!msg.thought_signature.empty())
+            {
+                part["thoughtSignature"] = msg.thought_signature;
+            }
+            entry["parts"] = json::array({part});
+        }
+        else if (msg.kind == MessageKind::FunctionResponse)
+        {
+            json function_response = {
+                {"name", msg.tool_name},
+                {"response", {{"result", msg.content}}}
+            };
+            if (!msg.tool_call_id.empty())
+            {
+                function_response["id"] = msg.tool_call_id;
+            }
+            entry["parts"] = json::array({{{"functionResponse", function_response}}});
+        }
+        else
+        {
+            entry["parts"] = json::array({{{"text", msg.content}}});
+        }
         contents.push_back(entry);
     }
 
@@ -138,6 +183,20 @@ std::string GeminiClient::buildRequestBody(const std::vector<Message> &messages,
         {"maxOutputTokens", _config.max_tokens}
     };
 
+    if (!function_declarations_json.empty())
+    {
+        const json declarations = json::parse(function_declarations_json);
+        if (!declarations.is_array())
+        {
+            throw std::invalid_argument(
+                "GeminiClient: function declarations phai la JSON array");
+        }
+        if (!declarations.empty())
+        {
+            body["tools"] = json::array({{{"functionDeclarations", declarations}}});
+        }
+    }
+
     return body.dump();
 }
 
@@ -154,56 +213,109 @@ std::string GeminiClient::buildRequestBody(const std::vector<Message> &messages,
 // ------------------------------------------------------------------
 std::string GeminiClient::sendRequest(const std::string &jsonBody) const
 {
-    CURL *curl = curl_easy_init();
-    if (!curl)
+    constexpr int max_attempts = 5;
+    const std::string url = buildEndpointUrl();
+    std::string last_response;
+    long last_status = 0;
+
+    for (int attempt = 0; attempt < max_attempts; ++attempt)
     {
-        throw std::runtime_error("GeminiClient: khong the khoi tao CURL");
+        CURL *curl = curl_easy_init();
+        if (!curl)
+        {
+            throw std::runtime_error("GeminiClient: khong the khoi tao CURL");
+        }
+
+        std::string response_buffer;
+        std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)>
+            headers(nullptr, curl_slist_free_all);
+        headers.reset(curl_slist_append(
+            headers.release(), "Content-Type: application/json"));
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonBody.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,
+                         static_cast<long>(jsonBody.size()));
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_buffer);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS,
+                         static_cast<long>(_config.timeout_ms));
+
+        const CURLcode request_result = curl_easy_perform(curl);
+        long http_status = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_status);
+        curl_easy_cleanup(curl);
+
+        if (request_result != CURLE_OK)
+        {
+            throw APIEnvironmentError(
+                std::string("GeminiClient: loi ket noi - ") +
+                curl_easy_strerror(request_result));
+        }
+
+        if (http_status >= 200 && http_status < 300)
+        {
+            return response_buffer;
+        }
+
+        last_status = http_status;
+        last_response = std::move(response_buffer);
+
+        const bool transient_status =
+            http_status == 429 || http_status == 500 ||
+            http_status == 502 || http_status == 503 ||
+            http_status == 504;
+
+        if (!transient_status || attempt + 1 == max_attempts)
+        {
+            break;
+        }
+
+        int delay_ms = std::min(30000, 2000 * (1 << attempt));
+        try
+        {
+            const json error_body = json::parse(last_response);
+            if (error_body.contains("error") &&
+                error_body["error"].contains("details"))
+            {
+                for (const auto &detail : error_body["error"]["details"])
+                {
+                    const std::string retry_delay =
+                        detail.value("retryDelay", "");
+                    if (!retry_delay.empty() && retry_delay.back() == 's')
+                    {
+                        const double seconds = std::stod(
+                            retry_delay.substr(0, retry_delay.size() - 1));
+                        delay_ms = std::min(
+                            60000,
+                            std::max(
+                                delay_ms,
+                                static_cast<int>(seconds * 1000.0)));
+                    }
+                }
+            }
+        }
+        catch (const std::exception &)
+        {
+            // Fall back to exponential backoff when the error body is unknown.
+        }
+
+        std::cerr << "[GeminiClient] HTTP " << http_status
+                  << "; retry " << (attempt + 2) << "/" << max_attempts
+                  << " after " << delay_ms << " ms\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
     }
 
-    std::string responseBuffer;
-    std::string url = buildEndpointUrl();
-
-    std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)> headers(nullptr, curl_slist_free_all);
-    headers.reset(curl_slist_append(headers.release(), "Content-Type: application/json"));
-
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonBody.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(jsonBody.size()));
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBuffer);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, static_cast<long>(_config.timeout_ms));
-
-    CURLcode res = curl_easy_perform(curl);
-
-    long httpStatus = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
-
-    curl_easy_cleanup(curl);
-
-    if (res != CURLE_OK)
-    {
-        // Bao gồm cả timeout (CURLE_OPERATION_TIMEDOUT) và
-        // connection refused (CURLE_COULDNT_CONNECT).
-        throw APIEnvironmentError(
-            std::string("GeminiClient: loi ket noi - ") + curl_easy_strerror(res));
-    }
-
-    if (httpStatus < 200 || httpStatus >= 300)
-    {
-        throw APIEnvironmentError(
-            "GeminiClient: HTTP status " + std::to_string(httpStatus) +
-            ", body: " + responseBuffer);
-    }
-
-    return responseBuffer;
+    throw APIEnvironmentError(
+        "GeminiClient: HTTP status " + std::to_string(last_status) +
+        ", body: " + last_response);
 }
 
 // ------------------------------------------------------------------
-// parseResponse()
-// Nhận raw JSON string từ Gemini, trích ra phần text trả lời.
-// Cấu trúc response thành công của Gemini (rút gọn):
-//   { "candidates": [ { "content": { "parts": [ { "text": "..." } ] } } ] }
+// parseToolAwareResponse()
+// Duyệt toàn bộ parts vì model thinking có thể đặt suy nghĩ ở part đầu và
+// functionCall/text trả lời thật ở part sau.
 //
 // Dùng try/catch quanh json::parse + truy cập field, vì:
 //   - JSON có thể malformed (đúng yêu cầu 3.1: "malformed JSON response")
@@ -211,7 +323,7 @@ std::string GeminiClient::sendRequest(const std::string &jsonBody) const
 //     "candidates" -> phải bắt riêng để thông báo lỗi có ý nghĩa,
 //     thay vì để chương trình crash vì truy cập field không tồn tại.
 // ------------------------------------------------------------------
-std::string GeminiClient::parseResponse(const std::string &rawJson) const
+LLMResponse GeminiClient::parseToolAwareResponse(const std::string &rawJson) const
 {
     json parsed;
     try
@@ -245,10 +357,75 @@ std::string GeminiClient::parseResponse(const std::string &rawJson) const
         throw LLMClientError("GeminiClient: response thieu candidates hoac candidates rong");
     }
 
+    TokenUsage usage;
+    if (parsed.contains("usageMetadata") && parsed["usageMetadata"].is_object())
+    {
+        const auto &metadata = parsed["usageMetadata"];
+        usage.prompt_tokens = metadata.value("promptTokenCount", 0LL);
+        usage.candidate_tokens = metadata.value("candidatesTokenCount", 0LL);
+        usage.thought_tokens = metadata.value("thoughtsTokenCount", 0LL);
+        usage.total_tokens = metadata.value("totalTokenCount", 0LL);
+    }
+
     try
     {
         const auto &candidate = parsed["candidates"].at(0);
-        return candidate.at("content").at("parts").at(0).at("text").get<std::string>();
+        const auto &parts = candidate.at("content").at("parts");
+        if (!parts.is_array() || parts.empty())
+        {
+            throw LLMClientError("GeminiClient: response khong co content parts");
+        }
+
+        std::string answer_text;
+        std::string fallback_thought;
+
+        for (const auto &part : parts)
+        {
+            if (part.contains("functionCall") && part["functionCall"].is_object())
+            {
+                const auto &function_call = part["functionCall"];
+                LLMToolCall call;
+                call.name = function_call.at("name").get<std::string>();
+                call.args = function_call.value("args", json::object()).dump();
+                call.id = function_call.value("id", "");
+                call.thought_signature = part.value("thoughtSignature", "");
+                return {"", call, usage};
+            }
+
+            if (!part.contains("text") || !part["text"].is_string())
+            {
+                continue;
+            }
+
+            const std::string text = part["text"].get<std::string>();
+            if (part.value("thought", false))
+            {
+                if (!fallback_thought.empty())
+                {
+                    fallback_thought += '\n';
+                }
+                fallback_thought += text;
+                continue;
+            }
+
+            if (!answer_text.empty())
+            {
+                answer_text += '\n';
+            }
+            answer_text += text;
+        }
+
+        if (!answer_text.empty())
+        {
+            return {answer_text, std::nullopt, usage};
+        }
+        if (!fallback_thought.empty())
+        {
+            return {fallback_thought, std::nullopt, usage};
+        }
+
+        throw LLMClientError(
+            "GeminiClient: response khong co text hoac functionCall");
     }
     catch (const json::exception &e)
     {
@@ -266,9 +443,28 @@ std::string GeminiClient::parseResponse(const std::string &rawJson) const
 // ------------------------------------------------------------------
 std::string GeminiClient::chat(const std::vector<Message> &messages)
 {
-    std::string requestBody = buildRequestBody(messages, {});
+    std::string requestBody = buildRequestBody(messages, {}, "");
     std::string rawResponse = sendRequest(requestBody);
-    return parseResponse(rawResponse);
+    LLMResponse response = parseToolAwareResponse(rawResponse);
+    if (response.tool_call.has_value())
+    {
+        return json({
+            {"type", "tool_call"},
+            {"tool", response.tool_call->name},
+            {"args", json::parse(response.tool_call->args)}
+        }).dump();
+    }
+    return response.text;
+}
+
+LLMResponse GeminiClient::chatWithTools(
+    const std::vector<Message> &messages,
+    const std::string &function_declarations_json)
+{
+    std::string requestBody = buildRequestBody(
+        messages, {}, function_declarations_json);
+    std::string rawResponse = sendRequest(requestBody);
+    return parseToolAwareResponse(rawResponse);
 }
 
 // ------------------------------------------------------------------
@@ -282,7 +478,8 @@ std::string GeminiClient::chat(const std::vector<Message> &messages)
 std::string GeminiClient::chatMultimodal(const std::vector<Message> &messages,
                                           const std::vector<std::string> &images)
 {
-    std::string requestBody = buildRequestBody(messages, images);
+    std::string requestBody = buildRequestBody(messages, images, "");
     std::string rawResponse = sendRequest(requestBody);
-    return parseResponse(rawResponse);
+    LLMResponse response = parseToolAwareResponse(rawResponse);
+    return response.text;
 }

@@ -1,6 +1,19 @@
 #include "read.h"
    FileReadTool::FileReadTool(const std::string& base_dir)
-        : Tool("FileReadTool", "Cong cu doc noi dung tu mot file text"), base_directory(base_dir) {}
+        : Tool(
+              "file_read",
+              "Read a text file from the current task workspace. Args: path.",
+              {
+                  {"type", "OBJECT"},
+                  {"properties", {
+                      {"path", {
+                          {"type", "STRING"},
+                          {"description", "Relative path inside the task workspace"}
+                      }}
+                  }},
+                  {"required", {"path"}}
+              }),
+          base_directory(base_dir) {}
     
     std::string FileReadTool::execute(const std::map<std::string, std::string>& args)  {
         // 1. Kiểm tra path truyền vào
@@ -26,4 +39,3 @@
         // 5. Trả về chuỗi nội dung file
         return content.str();
     }
-
