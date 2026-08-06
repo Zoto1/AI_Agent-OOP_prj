@@ -12,10 +12,16 @@ std::string WebSearchTool::performSearchRequest(const std::string& query) {
 }
 
 std::string WebSearchTool::execute(const std::map<std::string, std::string>& args) {
-    auto it = args.find("url");
+    auto it = args.find("query");
     if (it == args.end()) {
-        return "Error: Missing 'url' parameter!";
+        it = args.find("keywords");
+        return "Error: Missing 'query' parameter!";
     }
-    std::string url = it->second;
-    return "Fetched content from " + url;
-}
+    if (it == args.end()) {
+        it = args.find("q");       
+
+    if (it == args.end()) {
+        return "Error: Missing search parameter! Expected 'query' or 'keywords'.";
+    }
+    std::string query = it->second;
+    return performSearchRequest(query);}}
