@@ -39,7 +39,7 @@ std::optional<std::string> Memory::load_context(const std::string& query) const 
     }
     return std::nullopt;
 }
-void clear_memory() {
+void Memory::clear_memory() {
     memory_data.clear();
 }
 
