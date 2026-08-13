@@ -1,16 +1,16 @@
 #pragma once
-#include <iostream>
-#include <sstream>
 #include "tool.h"
 #include <string>
-#include <memory>
-#include <sstream>
 #include <map>
-
+#include <curl/curl.h>
+#include <sstream>
 class WebSearchTool : public Tool {
-public:
-    WebSearchTool();
-    std::string execute(const std::map<std::string, std::string>& args) override;
 private:
     std::string performSearchRequest(const std::string& query);
+
+public:
+    WebSearchTool();
+    ~WebSearchTool() override = default;
+
+    std::string execute(const std::map<std::string, std::string>& args) override;
 };
