@@ -1,11 +1,4 @@
 #include "calculator.h"
-#include <cctype>
-#include <cmath>
-#include <iomanip>
-#include <map>
-#include <sstream>
-#include <stdexcept>
-#include <string>
 
 namespace
 {
@@ -180,32 +173,51 @@ CalculatorTool::CalculatorTool()
 
 std::string CalculatorTool::execute(const std::map<std::string, std::string>& args) {
     try {
-        const auto expression = args.find("expression");
-        if (expression != args.end()) {
-            if (expression->second.empty()) {
-                return "Lỗi: Tham số 'expression' không được rỗng.";
+        std::string expr_str = "";
+
+        // List các key phổ biến mà LLM hay dùng nhầm
+        const std::vector<std::string> possible_keys = {
+            "expression", "expr", "math", "query", "input", "code"
+        };
+
+        // 1. Tìm key phù hợp
+        for (const auto& key : possible_keys) {
+            auto it = args.find(key);
+            if (it != args.end() && !it->second.empty()) {
+                expr_str = it->second;
+                break;
             }
-            const double value = ExpressionParser(expression->second).parse();
+        }
+
+        // 2. Thực thi nếu tìm thấy expression
+        if (!expr_str.empty()) {
+            // Trim bỏ dấu ngoặc kép dư thừa nếu LLM lỡ encode "\""
+            if (expr_str.front() == '"' && expr_str.back() == '"' && expr_str.length() > 1) {
+                expr_str = expr_str.substr(1, expr_str.length() - 2);
+            }
+
+            const double value = ExpressionParser(expr_str).parse();
             return "Kết quả: " + formatNumber(value);
         }
 
-        // Backward compatibility for older callers using a, b, op.
-        if (args.find("a") == args.end() || args.find("b") == args.end() || args.find("op") == args.end()) {
-            return "Lỗi: Thiếu tham số 'expression'.";
+        // 3. Fallback: Check bộ ba legacy (a, b, op)
+        if (args.count("a") && args.count("b") && args.count("op")) {
+            double a = std::stod(args.at("a"));
+            double b = std::stod(args.at("b"));
+            std::string op = args.at("op");
+
+            if (op == "+") return "Kết quả: " + formatNumber(a + b);
+            if (op == "-") return "Kết quả: " + formatNumber(a - b);
+            if (op == "*") return "Kết quả: " + formatNumber(a * b);
+            if (op == "/") {
+                if (b == 0) return "Lỗi: Không thể chia cho 0.";
+                return "Kết quả: " + formatNumber(a / b);
+            }
+            return "Lỗi: Phép tính không hợp lệ.";
         }
 
-        double a = std::stod(args.at("a"));
-        double b = std::stod(args.at("b"));
-        std::string op = args.at("op");
+        return "Lỗi: Thiếu tham số 'expression' (hoặc 'expr', 'input').";
 
-        if (op == "+") return "Kết quả: " + formatNumber(a + b);
-        if (op == "-") return "Kết quả: " + formatNumber(a - b);
-        if (op == "*") return "Kết quả: " + formatNumber(a * b);
-        if (op == "/") {
-            if (b == 0) return "Lỗi: Không thể chia cho 0.";
-            return "Kết quả: " + formatNumber(a / b);
-        }
-        return "Lỗi: Phép tính không hợp lệ.";
     } catch (const std::exception& e) {
         return std::string("Lỗi xử lý dữ liệu: ") + e.what();
     }

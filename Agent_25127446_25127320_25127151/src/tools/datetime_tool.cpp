@@ -1,50 +1,45 @@
 #include "datetime_tool.h"
 
-#include <chrono>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
-#include <string>
-
 DateTimeTool::DateTimeTool()
     : Tool(
           "datetime",
-          "Get the current system date and time. Args: format (optional, "
-          "strftime format string, default: %Y-%m-%d %H:%M:%S).",
+          "Get current system date and time with custom format. Args: format (default '%Y-%m-%d %H:%M:%S').",
           {
               {"type", "OBJECT"},
               {"properties", {
                   {"format", {
                       {"type", "STRING"},
-                      {"description", "strftime format, e.g. %Y-%m-%d %H:%M:%S"}
+                      {"description", "Format string for strftime, e.g. %Y-%m-%d %H:%M:%S"}
                   }}
-              }},
-              {"required", nlohmann::json::array()}
+              }}
           }) {}
 
-std::string DateTimeTool::execute(const std::map<std::string, std::string>& args)
-{
-    std::string format = "%Y-%m-%d %H:%M:%S";
-    auto format_it = args.find("format");
-    if (format_it != args.end() && !format_it->second.empty())
-    {
-        format = format_it->second;
+std::string DateTimeTool::execute(const std::map<std::string, std::string>& args) {
+    std::string fmt = "%Y-%m-%d %H:%M:%S";
+    if (auto it = args.find("format"); it != args.end() && !it->second.empty()) {
+        fmt = it->second;
     }
 
-    const std::time_t now = std::chrono::system_clock::to_time_t(
-        std::chrono::system_clock::now());
+    // Thiết lập múi giờ Việt Nam 
+#if defined(_WIN32) || defined(_WIN64)
+    _putenv("TZ=Asia/Ho_Chi_Minh");
+    _tzset();
+#else
+    setenv("TZ", "Asia/Ho_Chi_Minh", 1);
+    tzset();
+#endif
 
-    std::tm local_time{};
-    if (localtime_r(&now, &local_time) == nullptr)
-    {
-        return "Error: Failed to read local system time.";
-    }
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    
+    std::tm tm_buf{};
+#if defined(_WIN32) || defined(_WIN64)
+    localtime_s(&tm_buf, &now_c);
+#else
+    localtime_r(&now_c, &tm_buf);
+#endif
 
-    std::ostringstream output;
-    output << std::put_time(&local_time, format.c_str());
-    if (output.fail())
-    {
-        return "Error: Invalid format string: " + format;
-    }
-    return output.str();
+    std::ostringstream oss;
+    oss << std::put_time(&tm_buf, fmt.c_str());
+    return oss.str();
 }
