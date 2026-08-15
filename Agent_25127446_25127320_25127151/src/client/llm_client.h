@@ -5,6 +5,16 @@
 #include <optional>
 #include <stdexcept>
 
+// =============================================================================
+// C++20: concepts — requires <concepts>
+// =============================================================================
+#include <concepts>
+
+// =============================================================================
+// C++23: std::expected — requires <expected>
+// =============================================================================
+#include <expected>
+
 struct LLMConfig
 {
     std::string base_url;
@@ -104,4 +114,53 @@ public:
 
     virtual std::string chatMultimodal(const std::vector<Message> &messages,
                                        const std::vector<std::string> &images) = 0;
+
+    // =========================================================================
+    // S-3 — C++23: std::expected<T, E>
+    // =========================================================================
+    // safeChat / safeChatWithTools bọc các lời gọi ảo tương ứng trong try/catch.
+    // Thay vì ném ngoại lệ ra ngoài, chúng trả về:
+    //   - std::expected<..., std::string> chứa kết quả nếu thành công, hoặc
+    //   - std::unexpected(error_message) nếu có lỗi.
+    // Điều này cho phép caller kiểm tra lỗi rõ ràng mà không cần try/catch.
+
+    std::expected<std::string, std::string>
+    safeChat(const std::vector<Message> &messages)
+    {
+        try {
+            return chat(messages);
+        } catch (const std::exception &e) {
+            return std::unexpected(std::string(e.what()));
+        } catch (...) {
+            return std::unexpected(std::string("Unknown error in chat()"));
+        }
+    }
+
+    std::expected<LLMResponse, std::string>
+    safeChatWithTools(const std::vector<Message> &messages,
+                      const std::string &function_declarations_json)
+    {
+        try {
+            return chatWithTools(messages, function_declarations_json);
+        } catch (const std::exception &e) {
+            return std::unexpected(std::string(e.what()));
+        } catch (...) {
+            return std::unexpected(std::string("Unknown error in chatWithTools()"));
+        }
+    }
 };
+
+// =============================================================================
+// S-2 — C++20: Concepts
+// =============================================================================
+// LLMBackend<T> ràng buộc T phải là subclass (derived_from) của LLMClient.
+// Dùng để ràng buộc kiểu template tại compile-time, thay thế SFINAE.
+//
+// Ví dụ sử dụng:
+//   template <LLMBackend T>
+//   void process(std::shared_ptr<T> client) { ... }
+//
+// GeminiClient và OllamaClient đều thoả mãn concept này.
+
+template <typename T>
+concept LLMBackend = std::derived_from<T, LLMClient>;

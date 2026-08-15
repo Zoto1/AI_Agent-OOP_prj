@@ -10,7 +10,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==================================================
 # C++ Standard
 # ==================================================
-set(CMAKE_CXX_STANDARD 17)
+# Nâng lên C++23 để hỗ trợ:
+#   C++20: Concepts (LLMBackend), std::jthread
+#   C++23: std::expected<T,E>, std::print / std::println
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -194,4 +197,23 @@ target_link_libraries(
 add_test(
     NAME GeminiResponseTest
     COMMAND test_gemini_response
+)
+
+# --------------------------------------------------
+# Multi-agent Coordination (10.3)
+# --------------------------------------------------
+add_executable(
+    test_multi_agent
+    src/tests/test_multi_agent.cpp
+)
+
+target_link_libraries(
+    test_multi_agent
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME MultiAgentTest
+    COMMAND test_multi_agent
 )

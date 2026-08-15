@@ -55,8 +55,7 @@ Sau khi build thành công, các file thực thi được tạo trong `build/`:
 
 | File thực thi | Mục đích |
 | --- | --- |
-| `build/agent_run` | Chạy Agent ở chế độ interactive |
-| `build/benchmark_run` | Chạy toàn bộ benchmark |
+| `build/agent_run` | Entry point chính — hỗ trợ REPL, benchmark, run-task |
 | `build/test_*` | Các file unit test |
 
 ---
@@ -101,32 +100,31 @@ export GEMINI_API_KEY="your_api_key_here"
 
 ---
 
-## 4. Chạy Agent (Interactive)
+## 4. Chạy Agent
 
-Sau khi build, chạy:
+`agent_run` hỗ trợ **3 chế độ** qua CLI flags:
+
+### 4.1 Interactive REPL (mặc định)
+
+Chạy Agent ở chế độ hội thoại tương tác:
 
 ```bash
 ./build/agent_run
 ```
 
-Hoặc chỉ định file config khác:
+Chỉ định config khác hoặc bật verbose:
 
 ```bash
 ./build/agent_run --config my_config.json
-```
-
-Bật chế độ verbose (in chi tiết từng bước Thought / Tool Call / Observation):
-
-```bash
 ./build/agent_run --verbose
+./build/agent_run --verbose --config my_config.json
 ```
 
 **Ví dụ tương tác:**
 
-```basch
+```
 Nhap yeu cau (go 'exit' de thoat):
 > Tính 128 chia 8 và lưu kết quả vào result.txt
-[Agent sẽ thực hiện: Think → calculator(128/8) → file_write(result.txt) → FinalAnswer]
 16
 > exit
 ```
@@ -139,6 +137,39 @@ Agent dừng với một trong 3 trạng thái:
 | `LoopDetected` | Phát hiện vòng lặp (GenericRepeat / PingPong) |
 | `MaxStepsReached` | Đã chạy hết số bước tối đa (mặc định 10) |
 
+### 4.2 Benchmark — chạy toàn bộ tập task
+
+```bash
+./build/agent_run --benchmark src/benchmark/task.json
+```
+
+Chạy tất cả 10 task, ghi kết quả vào `results/`, in báo cáo success rate ra stdout.
+
+### 4.3 Run-task — chạy 1 task theo ID
+
+```bash
+./build/agent_run --run-task task_001 src/benchmark/task.json
+```
+
+Chạy đúng 1 task, in kết quả `[PASS/FAIL]`, score, thời gian, token. Exit code = 0 nếu pass, 1 nếu fail.
+
+### 4.4 Xem trợ giúp
+
+```bash
+./build/agent_run --help
+```
+
+**Tổng hợp tất cả flags:**
+
+| Flag | Tham số | Mô tả |
+| --- | --- | --- |
+| *(không có)* | — | Interactive REPL |
+| `--benchmark` | `<tasks.json>` | Chạy toàn bộ benchmark |
+| `--run-task` | `<id> <tasks.json>` | Chạy 1 task theo ID |
+| `--verbose` | — | In chi tiết Thought / Tool Call / Observation |
+| `--config` | `<config.json>` | Đường dẫn file config LLM (mặc định: `config.json`) |
+| `--help` / `-h` | — | In hướng dẫn sử dụng |
+
 ---
 
 ## 5. Chạy Benchmark
@@ -146,12 +177,18 @@ Agent dừng với một trong 3 trạng thái:
 Chạy toàn bộ 10 task benchmark:
 
 ```bash
-./build/benchmark_run config.json src/benchmark/task.json
+./build/agent_run --benchmark src/benchmark/task.json
+```
+
+Chạy 1 task cụ thể (ví dụ task_001):
+
+```bash
+./build/agent_run --run-task task_001 src/benchmark/task.json
 ```
 
 Kết quả được ghi tự động vào thư mục `results/`:
 
-```basch
+```
 results/
 ├── benchmark_summary.json       # Tổng hợp: pass rate, score, thời gian
 ├── trajectory_task_001.json     # Chi tiết từng bước của task 001
@@ -161,14 +198,14 @@ results/
 
 **In báo cáo tổng hợp** (được in ra stdout sau khi benchmark hoàn tất):
 
-```basch
+```
 [Benchmark Summary]
 Total tasks  : 10
 Passed       : 10
 Failed       : 0
 Success rate : 100%
 Avg score    : 1
-Avg time/task     : 14789 ms
+Avg time/task: 14789 ms
 ```
 
 ---
