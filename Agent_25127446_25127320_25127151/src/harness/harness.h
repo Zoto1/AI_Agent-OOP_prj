@@ -7,6 +7,7 @@
 #include "../client/llm_client.h"
 #include "environnment.h"
 #include "evaluator.h"
+#include "multi_agent_coordinator.h"
 #include "trajectory.h"
 
 class ToolRegistry;
@@ -83,4 +84,22 @@ public:
   // In báo cáo tổng hợp: success rate tổng, breakdown theo eval_type
   // (mục 7.3/VIII đề bài)
   void printReport(const std::vector<TaskResult> &results) const;
+
+  // =========================================================================
+  // 10.3 Multi-agent Coordination
+  // =========================================================================
+  // Phân tách task phức tạp thành các SubTaskDefinition, spawn mỗi subtask
+  // vào một thread riêng (std::jthread C++20), gộp kết quả cuối.
+  //
+  // subtasks: danh sách subtask đã được phân chia sẵn (do caller chuẩn bị
+  //           hoặc do LLM phân tích từ task gốc).
+  // Trả về: chuỗi tổng hợp kết quả của tất cả sub-agent.
+  std::string runMultiAgent(const std::vector<SubTaskDefinition>& subtasks);
+
+  // Tiện ích: tự động phân chia 1 task thành N subtask đơn giản
+  // bằng cách chia đều hoặc theo dấu phân cách '\n'.
+  // Hữu ích khi demo "task phức tạp được chia cho 2 agent chạy song song".
+  static std::vector<SubTaskDefinition>
+  splitTaskIntoSubtasks(const std::string& combined_instruction,
+                        int num_agents = 2);
 };

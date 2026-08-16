@@ -458,21 +458,29 @@ void AgentLoop::observe(const std::string &tool_result)
 
 LLMResponse AgentLoop::think()
 {
-    try
-    {
-        const std::string declarations = tool_registry
-                                             ? tool_registry->functionDeclarationsJson()
-                                             : std::string("[]");
-        return llm->chatWithTools(history, declarations);
+    // =========================================================================
+    // S-3 — C++23: std::expected<T, E>
+    // =========================================================================
+    // safeChatWithTools() bọc chatWithTools() trong try/catch và trả về
+    // std::expected<LLMResponse, std::string>.
+    // Nếu có lỗi, result.error() chứa error message — không cần try/catch ở đây.
+    const std::string declarations = tool_registry
+                                         ? tool_registry->functionDeclarationsJson()
+                                         : std::string("[]");
+    auto result = llm->safeChatWithTools(history, declarations);
+
+    if (!result.has_value()) {
+        // Phân loại lỗi để ném đúng loại exception
+        const std::string &err = result.error();
+        if (err.find("API_ENVIRONMENT") != std::string::npos ||
+            err.find("GEMINI_API_KEY") != std::string::npos)
+        {
+            throw std::runtime_error(std::string("API_ENVIRONMENT_ERROR: ") + err);
+        }
+        throw std::runtime_error(std::string("LLM_CLIENT_ERROR: ") + err);
     }
-    catch (const APIEnvironmentError &e)
-    {
-        throw std::runtime_error(std::string("API_ENVIRONMENT_ERROR: ") + e.what());
-    }
-    catch (const LLMClientError &e)
-    {
-        throw std::runtime_error(std::string("LLM_CLIENT_ERROR: ") + e.what());
-    }
+
+    return result.value();
 }
 
 std::optional<std::variant<ToolCall, FinalAnswer>>

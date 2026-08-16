@@ -10,7 +10,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==================================================
 # C++ Standard
 # ==================================================
-set(CMAKE_CXX_STANDARD 17)
+# Nâng lên C++23 để hỗ trợ:
+#   C++20: Concepts (LLMBackend), std::jthread
+#   C++23: std::expected<T,E>, std::print / std::println
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -197,6 +200,20 @@ add_test(
 )
 
 # --------------------------------------------------
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+# Multi-agent Coordination (10.3)
+# --------------------------------------------------
+add_executable(
+    test_multi_agent
+    src/tests/test_multi_agent.cpp
+)
+
+target_link_libraries(
+    test_multi_agent
+=======
+>>>>>>> temp-branch
 # Tools: new tools, tool policy, memory vector search
 # --------------------------------------------------
 add_executable(
@@ -206,11 +223,25 @@ add_executable(
 
 target_link_libraries(
     test_tools
+<<<<<<< HEAD
+=======
+>>>>>>> 5ea1167 (okok)
+>>>>>>> temp-branch
     PRIVATE
     OopAgentCore
 )
 
 add_test(
+<<<<<<< HEAD
     NAME ToolsTest
     COMMAND test_tools
+=======
+<<<<<<< HEAD
+    NAME MultiAgentTest
+    COMMAND test_multi_agent
+=======
+    NAME ToolsTest
+    COMMAND test_tools
+>>>>>>> 5ea1167 (okok)
+>>>>>>> temp-branch
 )

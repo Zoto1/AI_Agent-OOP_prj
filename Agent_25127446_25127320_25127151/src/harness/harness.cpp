@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_set>
 using json = nlohmann::json;
@@ -852,4 +853,122 @@ void HarnessRunner::exportBenchmarkSummary(
   }
 
   output_file << summary.dump(4);
+}
+
+// =============================================================================
+// 10.3 Multi-agent Coordination — HarnessRunner integration
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// runMultiAgent: spawn sub-agent cho từng subtask, chờ tất cả và gộp kết quả.
+// ---------------------------------------------------------------------------
+std::string HarnessRunner::runMultiAgent(
+    const std::vector<SubTaskDefinition>& subtasks)
+{
+    if (subtasks.empty()) {
+        return "(Không có subtask nào được cung cấp)";
+    }
+
+    std::cout << "\n[HarnessRunner] Bắt đầu Multi-agent Coordination với "
+              << subtasks.size() << " sub-agent(s)...\n";
+
+    // Tạo coordinator, truyền toàn bộ dependency của HarnessRunner
+    MultiAgentCoordinator coordinator(
+        llm,
+        tool_registry,
+        skill_loader,
+        loop_detector
+    );
+
+    // Chạy song song tất cả subtask
+    const std::vector<SubAgentResult> results = coordinator.runParallel(subtasks);
+
+    // Xuất trajectory riêng cho từng sub-agent vào output_dir
+    for (const SubAgentResult& res : results) {
+        if (!res.trajectory.task_id.empty()) {
+            try {
+                exportTrajectory(res.trajectory);
+            } catch (const std::exception& e) {
+                std::cerr << "[HarnessRunner] Canh bao: khong xuat duoc trajectory cua '"
+                          << res.sub_id << "': " << e.what() << "\n";
+            }
+        }
+    }
+
+    // In tóm tắt nhanh
+    int success_count = 0;
+    for (const SubAgentResult& res : results) {
+        if (res.success) ++success_count;
+    }
+
+    std::cout << "[HarnessRunner] Multi-agent xong: "
+              << success_count << "/" << results.size()
+              << " sub-agent thành công.\n\n";
+
+    // Gộp và trả về kết quả tổng hợp
+    return MultiAgentCoordinator::mergeResults(results);
+}
+
+// ---------------------------------------------------------------------------
+// splitTaskIntoSubtasks: chia 1 task thành num_agents subtask.
+//
+// Chiến lược:
+//   - Nếu combined_instruction chứa ký tự '\n', tách theo dòng.
+//   - Mỗi dòng (không rỗng) là 1 subtask.
+//   - Nếu số dòng < num_agents, mỗi subtask là toàn bộ instruction + index.
+// ---------------------------------------------------------------------------
+std::vector<SubTaskDefinition>
+HarnessRunner::splitTaskIntoSubtasks(const std::string& combined_instruction,
+                                     int num_agents)
+{
+    std::vector<SubTaskDefinition> subtasks;
+
+    if (combined_instruction.empty() || num_agents <= 0) {
+        return subtasks;
+    }
+
+    // Tách theo dòng
+    std::vector<std::string> lines;
+    {
+        std::istringstream iss(combined_instruction);
+        std::string line;
+        while (std::getline(iss, line)) {
+            // Bỏ dòng trắng
+            if (!line.empty() &&
+                line.find_first_not_of(" \t\r\n") != std::string::npos) {
+                lines.push_back(std::move(line));
+            }
+        }
+    }
+
+    if (lines.empty()) {
+        // Fallback: 1 subtask duy nhất
+        SubTaskDefinition sub;
+        sub.id          = "sub_0";
+        sub.instruction = combined_instruction;
+        sub.max_steps   = 10;
+        subtasks.push_back(std::move(sub));
+        return subtasks;
+    }
+
+    // Gán mỗi dòng cho 1 sub-agent (vòng tròn nếu ít agent hơn dòng)
+    // Nếu nhiều dòng hơn num_agents: ghép dồn vào agent cuối cùng
+    const int actual_agents = std::min(static_cast<int>(lines.size()), num_agents);
+    subtasks.resize(actual_agents);
+
+    for (int i = 0; i < actual_agents; ++i) {
+        subtasks[i].id        = "sub_" + std::to_string(i);
+        subtasks[i].max_steps = 10;
+    }
+
+    // Phân phối dòng vào sub-agent
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        int agent_idx = static_cast<int>(i) % actual_agents;
+        if (!subtasks[agent_idx].instruction.empty()) {
+            subtasks[agent_idx].instruction += "\n";
+        }
+        subtasks[agent_idx].instruction += lines[i];
+    }
+
+    return subtasks;
 }
