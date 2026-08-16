@@ -13,13 +13,7 @@
 #include "tools/write.h"
 #include "tools/memory_tool.h"
 #include "tools/web_tool.h"
-<<<<<<< HEAD
 #include "harness/harness.h"
-=======
-#include "tools/datetime_tool.h"
-#include "tools/httpGet_tool.h"
-#include "tools/jsonParser_tool.h"
->>>>>>> 74e133c (add 3 tools)
 
 #include <iostream>
 #include <memory>

@@ -214,3 +214,14 @@ add_executable(
     test_tools
     src/tests/test_tools.cpp
 )
+
+target_link_libraries(
+    test_tools
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME ToolsTest
+    COMMAND test_tools
+)
