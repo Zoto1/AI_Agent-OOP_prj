@@ -2,11 +2,11 @@
 #include "tool.h"
 #include <string>
 #include <map>
-#include <curl/curl.h>
-#include <sstream>
+
 class WebSearchTool : public Tool {
 private:
-    std::string performSearchRequest(const std::string& query);
+    static std::string urlEncode(const std::string& value);
+    static std::string fetchSearchResults(const std::string& query);
 
 public:
     WebSearchTool();

@@ -29,11 +29,14 @@ std::string ExecTool::execute(const std::map<std::string, std::string>& args) {
     }
 
     std::string command = args.at("command");
+    if (command.empty()) {
+        return "Lỗi: Tham số 'command' không được rỗng.";
+    }
     std::array<char, 128> buffer{};
     std::string result;
     std::unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(command.c_str(), "r"), PCLOSE);
     if (!pipe) {
-        return "Lỗi: Không thể thực thi lệnh hệ thống.";
+        return "Lỗi: Không thể thực thi lệnh hệ thống: " + command;
     }
 
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {

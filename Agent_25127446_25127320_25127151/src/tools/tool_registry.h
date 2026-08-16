@@ -4,10 +4,12 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <unordered_set>
 
 class ToolRegistry {
 private:
     std::map<std::string, std::shared_ptr<Tool>> tools;
+    std::unordered_set<std::string> denied_tools;
 
     ToolRegistry() = default;
 
@@ -23,4 +25,8 @@ public:
 
     void registerTool(std::shared_ptr<Tool> tool);
     std::string executeTool(const std::string& name, const std::map<std::string, std::string>& args);
+
+    void denyTool(const std::string& name);
+    void allowTool(const std::string& name);
+    bool isAllowed(const std::string& name) const;
 };

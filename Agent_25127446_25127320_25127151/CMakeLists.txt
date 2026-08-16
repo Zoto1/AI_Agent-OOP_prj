@@ -195,3 +195,22 @@ add_test(
     NAME GeminiResponseTest
     COMMAND test_gemini_response
 )
+
+# --------------------------------------------------
+# Tools: new tools, tool policy, memory vector search
+# --------------------------------------------------
+add_executable(
+    test_tools
+    src/tests/test_tools.cpp
+)
+
+target_link_libraries(
+    test_tools
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME ToolsTest
+    COMMAND test_tools
+)

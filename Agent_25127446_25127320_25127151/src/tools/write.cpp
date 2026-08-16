@@ -45,6 +45,10 @@
         if (relative_path.find("..") != std::string::npos) {
             return "Error: vượt mức truy cập";
         }
+        // 3b. Ngăn chặn đường dẫn tuyệt đối (vd: /etc/passwd)
+        if (relative_path.front() == '/' || relative_path.front() == '\\') {
+            return "Error: vượt mức truy cập";
+        }
 
         // 4.tạo đường dẫn 
         std::string full_path = base_directory + relative_path;
