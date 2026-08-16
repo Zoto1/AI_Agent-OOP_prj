@@ -334,8 +334,11 @@ Project theo mô hình **ReAct (Reason + Act)** với các layer tách biệt ho
 | `exec` | `ExecTool` | Chạy lệnh shell và trả về stdout |
 | `file_read` | `FileReadTool` | Đọc nội dung một file trong workspace |
 | `file_write` | `FileWriteTool` | Ghi nội dung vào một file trong workspace |
-| `memory` | `Memory` | Lưu và truy xuất key-value trong session hiện tại |
-| `web_search` | `WebSearchTool` | Tìm kiếm web và trả về kết quả |
+| `memory` | `Memory` | Lưu và truy xuất key-value trong session hiện tại (hỗ trợ vector search) |
+| `web_search` | `WebSearchTool` | Tìm kiếm web qua DuckDuckGo Instant Answer API và trả về kết quả |
+| `datetime` | `DateTimeTool` | Lấy thời gian hệ thống theo định dạng `strftime` |
+| `http_get` | `HttpGetTool` | Gửi request HTTP GET và trả về nội dung response |
+| `json_parse` | `JsonParserTool` | Parse chuỗi JSON và truy xuất giá trị theo dot notation |
 
 **Cách Agent gọi tool** (native function calling qua Gemini API):
 

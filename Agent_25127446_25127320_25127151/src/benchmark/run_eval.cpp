@@ -8,7 +8,10 @@
 
 #include "tools/tool_registry.h"
 #include "tools/calculator.h"
+#include "tools/datetime_tool.h"
 #include "tools/exec.h"
+#include "tools/http_get_tool.h"
+#include "tools/json_parser_tool.h"
 #include "tools/read.h"
 #include "tools/write.h"
 #include "tools/memory_tool.h"
@@ -99,6 +102,18 @@ int main(int argc, char* argv[])
 
         singleton.registerTool(
             std::make_shared<WebSearchTool>()
+        );
+
+        singleton.registerTool(
+            std::make_shared<DateTimeTool>()
+        );
+
+        singleton.registerTool(
+            std::make_shared<HttpGetTool>()
+        );
+
+        singleton.registerTool(
+            std::make_shared<JsonParserTool>()
         );
 
         // shared_ptr không sở hữu singleton.

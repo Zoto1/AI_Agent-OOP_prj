@@ -13,13 +13,25 @@
                   }},
                   {"required", {"path"}}
               }),
-          base_directory(base_dir) {}
-    
+          base_directory(base_dir) {
+        if (!base_directory.empty() && base_directory.back() != '/' && base_directory.back() != '\\') {
+            base_directory += "/";
+        }
+    }
     std::string FileReadTool::execute(const std::map<std::string, std::string>& args)  {
         // 1. Kiểm tra path truyền vào
         auto it = args.find("path");
-        if (it == args.end()) {
+        if (it == args.end() || it->second.empty()) {
             return "Error: Thieu tham so 'path' de doc file.";
+        }
+
+        // 1b. Ngăn chặn path traversal (vượt ra ngoài workspace)
+        if (it->second.find("..") != std::string::npos) {
+            return "Error: vượt mức truy cập";
+        }
+        // 1c. Ngăn chặn đường dẫn tuyệt đối (vd: /etc/passwd)
+        if (it->second.front() == '/' || it->second.front() == '\\') {
+            return "Error: vượt mức truy cập";
         }
 
         // 2. Tổng lại các file cần đọc

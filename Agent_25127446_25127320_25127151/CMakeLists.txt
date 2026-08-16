@@ -200,6 +200,7 @@ add_test(
 )
 
 # --------------------------------------------------
+<<<<<<< HEAD
 # Multi-agent Coordination (10.3)
 # --------------------------------------------------
 add_executable(
@@ -209,11 +210,27 @@ add_executable(
 
 target_link_libraries(
     test_multi_agent
+=======
+# Tools: new tools, tool policy, memory vector search
+# --------------------------------------------------
+add_executable(
+    test_tools
+    src/tests/test_tools.cpp
+)
+
+target_link_libraries(
+    test_tools
+>>>>>>> 5ea1167 (okok)
     PRIVATE
     OopAgentCore
 )
 
 add_test(
+<<<<<<< HEAD
     NAME MultiAgentTest
     COMMAND test_multi_agent
+=======
+    NAME ToolsTest
+    COMMAND test_tools
+>>>>>>> 5ea1167 (okok)
 )

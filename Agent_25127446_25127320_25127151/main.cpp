@@ -5,7 +5,10 @@
 #include "agent/skill_loader.h"
 #include "tools/tool_registry.h"
 #include "tools/calculator.h"
+#include "tools/datetime_tool.h"
 #include "tools/exec.h"
+#include "tools/http_get_tool.h"
+#include "tools/json_parser_tool.h"
 #include "tools/read.h"
 #include "tools/write.h"
 #include "tools/memory_tool.h"
@@ -71,6 +74,9 @@ int main(int argc, char* argv[]) {
             "file_write", "Ghi noi dung vao file. Args: path, content", "./"));
         singleton.registerTool(std::make_shared<Memory>());
         singleton.registerTool(std::make_shared<WebSearchTool>());
+        singleton.registerTool(std::make_shared<DateTimeTool>());
+        singleton.registerTool(std::make_shared<HttpGetTool>());
+        singleton.registerTool(std::make_shared<JsonParserTool>());
 
         // shared_ptr không sở hữu singleton; dùng no-op deleter để tránh double-free
         auto registry = std::shared_ptr<ToolRegistry>(&singleton, [](ToolRegistry*) {});
