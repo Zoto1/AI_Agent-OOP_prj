@@ -199,12 +199,6 @@ add_test(
     COMMAND test_gemini_response
 )
 
-# --------------------------------------------------
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-# Multi-agent Coordination (10.3)
-# --------------------------------------------------
 add_executable(
     test_multi_agent
     src/tests/test_multi_agent.cpp
@@ -212,36 +206,11 @@ add_executable(
 
 target_link_libraries(
     test_multi_agent
-=======
->>>>>>> temp-branch
-# Tools: new tools, tool policy, memory vector search
-# --------------------------------------------------
-add_executable(
-    test_tools
-    src/tests/test_tools.cpp
-)
-
-target_link_libraries(
-    test_tools
-<<<<<<< HEAD
-=======
->>>>>>> 5ea1167 (okok)
->>>>>>> temp-branch
     PRIVATE
     OopAgentCore
 )
 
-add_test(
-<<<<<<< HEAD
-    NAME ToolsTest
-    COMMAND test_tools
-=======
-<<<<<<< HEAD
-    NAME MultiAgentTest
-    COMMAND test_multi_agent
-=======
-    NAME ToolsTest
-    COMMAND test_tools
->>>>>>> 5ea1167 (okok)
->>>>>>> temp-branch
+add_executable(
+    test_tools
+    src/tests/test_tools.cpp
 )
