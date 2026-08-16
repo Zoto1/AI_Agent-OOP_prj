@@ -1,5 +1,6 @@
 #include "client/config_loader.h"
 #include "client/gemini_client.h"
+#include "client/embedding_client.h"
 #include "agent/agent_loop.h"
 #include "agent/loop_detector.h"
 #include "agent/skill_loader.h"
@@ -72,7 +73,8 @@ int main(int argc, char* argv[]) {
         singleton.registerTool(std::make_shared<FileReadTool>("./"));
         singleton.registerTool(std::make_shared<FileWriteTool>(
             "file_write", "Ghi noi dung vao file. Args: path, content", "./"));
-        singleton.registerTool(std::make_shared<Memory>());
+        singleton.registerTool(std::make_shared<Memory>(
+            makeOllamaEmbeddingClient(config_path), "memory_store.json"));
         singleton.registerTool(std::make_shared<WebSearchTool>());
         singleton.registerTool(std::make_shared<DateTimeTool>());
         singleton.registerTool(std::make_shared<HttpGetTool>());

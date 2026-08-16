@@ -334,7 +334,7 @@ Project theo mô hình **ReAct (Reason + Act)** với các layer tách biệt ho
 | `exec` | `ExecTool` | Chạy lệnh shell và trả về stdout |
 | `file_read` | `FileReadTool` | Đọc nội dung một file trong workspace |
 | `file_write` | `FileWriteTool` | Ghi nội dung vào một file trong workspace |
-| `memory` | `Memory` | Lưu và truy xuất key-value trong session hiện tại (hỗ trợ vector search) |
+| `memory` | `Memory` | Lưu và truy xuất key-value trong session hiện tại (hỗ trợ vector search + embedding-based search + persist JSON) |
 | `web_search` | `WebSearchTool` | Tìm kiếm web qua DuckDuckGo Instant Answer API và trả về kết quả |
 | `datetime` | `DateTimeTool` | Lấy thời gian hệ thống theo định dạng `strftime` |
 | `http_get` | `HttpGetTool` | Gửi request HTTP GET và trả về nội dung response |
@@ -390,6 +390,31 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 | --- | --- | --- |
 | `keyword` | `KeywordEvaluator` | Kiểm tra `final_answer` có chứa tất cả từ khóa yêu cầu |
 | `functional` | `FunctionalEvaluator` | Chạy shell script (`eval_script`), exit code 0 = pass |
+
+### Bonus: Persistent Memory với Vector Search (mục 10.2)
+
+`Memory` tool hỗ trợ **embedding-based similarity search** thay cho keyword search:
+
+- Khi `save`, nội dung được nhúng qua **`nomic-embed-text`** (Ollama `/api/embed`) và lưu kèm embedding.
+- Khi `load`, query được nhúng và tìm bằng **cosine similarity** trong C++ (`cosineSimilarityVectors`).
+- Memory được **persist** sang `memory_store.json` nên sống sót giữa các lần chạy.
+- Nếu Ollama chưa chạy, tự động fallback về trigram vector search.
+
+**Cấu hình embedding trong `config.json`:**
+
+```json
+{
+  "ollama": {
+    "base_url": "http://localhost:11434",
+    "embedding": {
+      "enabled": true,
+      "model": "nomic-embed-text"
+    }
+  }
+}
+```
+
+Chạy `ollama pull nomic-embed-text` trước khi dùng. Các file liên quan: `src/client/embedding_client.h`, `src/client/ollama_embedding_client.h/.cpp`, `src/tools/memory_tool.h/.cpp`.
 
 ### Kết quả benchmark mẫu
 

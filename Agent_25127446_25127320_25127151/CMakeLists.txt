@@ -225,3 +225,22 @@ add_test(
     NAME ToolsTest
     COMMAND test_tools
 )
+
+# --------------------------------------------------
+# Memory embedding + persistence
+# --------------------------------------------------
+add_executable(
+    test_embedding_memory
+    src/tests/test_embedding_memory.cpp
+)
+
+target_link_libraries(
+    test_embedding_memory
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME EmbeddingMemoryTest
+    COMMAND test_embedding_memory
+)
