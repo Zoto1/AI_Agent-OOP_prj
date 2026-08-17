@@ -249,6 +249,25 @@ add_test(
 )
 
 # --------------------------------------------------
+# Exec tool: stdout, stderr, exit code and timeout
+# --------------------------------------------------
+add_executable(
+    test_exec_tool
+    src/tests/test_exec_tool.cpp
+)
+
+target_link_libraries(
+    test_exec_tool
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME ExecToolTest
+    COMMAND test_exec_tool
+)
+
+# --------------------------------------------------
 # Memory embedding + persistence
 # --------------------------------------------------
 add_executable(
