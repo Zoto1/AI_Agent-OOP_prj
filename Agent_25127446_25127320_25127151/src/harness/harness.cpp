@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <print>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <stdexcept>
@@ -758,16 +759,16 @@ void HarnessRunner::printReport(const std::vector<TaskResult> &results) const {
 
   double success_rate = total > 0 ? (100.0 * passed / total) : 0.0;
 
-  std::cout << "\n================ BÁO CÁO BENCHMARK ================\n";
-  std::cout << "Tổng số task     : " << total << "\n";
-  std::cout << "Pass              : " << passed << "\n";
-  std::cout << "Fail              : " << (total - passed - errored) << "\n";
-  std::cout << "Lỗi (không chạy được): " << errored << "\n";
-  std::cout << "Success rate      : " << success_rate << "%\n";
+  std::println("\n================ BÁO CÁO BENCHMARK ================");
+  std::println("Tổng số task        : {}", total);
+  std::println("Pass                : {}", passed);
+  std::println("Fail                : {}", total - passed - errored);
+  std::println("Lỗi (không chạy được): {}", errored);
+  std::println("Success rate        : {:.2f}%", success_rate);
   if (total > 0) {
-    std::cout << "Thời gian TB/task : " << (sum_time_ms / total) << " ms\n";
+    std::println("Thời gian TB/task   : {} ms", sum_time_ms / total);
   }
-  std::cout << "=====================================================\n";
+  std::println("=====================================================");
 }
 void HarnessRunner::exportBenchmarkSummary(
     const std::vector<TaskResult> &results) const {
