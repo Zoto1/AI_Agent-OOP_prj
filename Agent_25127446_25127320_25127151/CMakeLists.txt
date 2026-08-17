@@ -268,6 +268,25 @@ add_test(
 )
 
 # --------------------------------------------------
+# Harness end-to-end with a fake LLM (no external API)
+# --------------------------------------------------
+add_executable(
+    test_harness_integration
+    src/tests/test_harness_integration.cpp
+)
+
+target_link_libraries(
+    test_harness_integration
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME HarnessIntegrationTest
+    COMMAND test_harness_integration
+)
+
+# --------------------------------------------------
 # Memory embedding + persistence
 # --------------------------------------------------
 add_executable(

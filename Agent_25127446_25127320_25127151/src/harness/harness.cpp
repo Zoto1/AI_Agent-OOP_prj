@@ -273,6 +273,7 @@ TaskResult HarnessRunner::runTask(
 
     TaskResult result;
     result.task_id = task.id;
+    result.eval_type = task.eval_type;
 
     const fs::path trajectory_path =
         fs::path(output_dir) /
@@ -376,6 +377,23 @@ TaskResult HarnessRunner::runTask(
         safelyExportTrajectory();
 
         return result;
+    }
+
+    // Mỗi benchmark task bắt đầu với trạng thái tool riêng. Với
+    // NativeEnvironment, reset trong đúng workspace của task để các tool có
+    // persistence tương đối (như Memory) không đụng dữ liệu task khác.
+    if (tool_registry)
+    {
+        auto native_env = std::dynamic_pointer_cast<NativeEnvironment>(env);
+        if (native_env)
+        {
+            CurrentPathGuard path_guard(native_env->getWorkingDir());
+            tool_registry->resetToolStates();
+        }
+        else
+        {
+            tool_registry->resetToolStates();
+        }
     }
 
     /*
@@ -747,6 +765,8 @@ void HarnessRunner::printReport(const std::vector<TaskResult> &results) const {
   int passed = 0;
   int errored = 0;
   long long sum_time_ms = 0;
+  int keyword_total = 0, keyword_passed = 0;
+  int functional_total = 0, functional_passed = 0;
 
   for (const auto &r : results) {
     if (r.error) {
@@ -755,6 +775,13 @@ void HarnessRunner::printReport(const std::vector<TaskResult> &results) const {
       ++passed;
     }
     sum_time_ms += r.total_time_ms;
+    if (r.eval_type == "keyword") {
+      ++keyword_total;
+      if (r.success) ++keyword_passed;
+    } else if (r.eval_type == "functional") {
+      ++functional_total;
+      if (r.success) ++functional_passed;
+    }
   }
 
   double success_rate = total > 0 ? (100.0 * passed / total) : 0.0;
@@ -767,6 +794,14 @@ void HarnessRunner::printReport(const std::vector<TaskResult> &results) const {
   std::println("Success rate        : {:.2f}%", success_rate);
   if (total > 0) {
     std::println("Thời gian TB/task   : {} ms", sum_time_ms / total);
+  }
+  if (keyword_total > 0) {
+    std::println("Keyword evaluator   : {}/{} pass", keyword_passed,
+                 keyword_total);
+  }
+  if (functional_total > 0) {
+    std::println("Functional evaluator: {}/{} pass", functional_passed,
+                 functional_total);
   }
   std::println("=====================================================");
 }
@@ -800,6 +835,7 @@ void HarnessRunner::exportBenchmarkSummary(
     json item;
 
     item["task_id"] = result.task_id;
+    item["eval_type"] = result.eval_type;
     item["success"] = result.success;
     item["score"] = result.score;
     item["total_time_ms"] = result.total_time_ms;

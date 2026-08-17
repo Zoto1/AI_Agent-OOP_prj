@@ -33,6 +33,15 @@ bool ToolRegistry::isAllowed(const std::string &name) const
     return denied_tools.find(name) == denied_tools.end();
 }
 
+void ToolRegistry::resetToolStates()
+{
+    for (const auto &[name, tool] : tools)
+    {
+        (void)name;
+        tool->resetState();
+    }
+}
+
 std::string ToolRegistry::describeToolsForPrompt() const
 {
     std::string result;

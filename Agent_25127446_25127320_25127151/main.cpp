@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
             HarnessRunner harness(llm, registry, skills, detector,
                                   "results/", "workspace/");
             auto results = harness.runBatch(tasks_json);
-            harness.printReport(results);
+            (void)results; // runBatch đã in và xuất báo cáo.
             return 0;
 
         } else if (mode == "run-task") {
