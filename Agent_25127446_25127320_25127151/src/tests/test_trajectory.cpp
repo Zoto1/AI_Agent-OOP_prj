@@ -92,6 +92,8 @@ int main()
         output["steps"][1]["action"]["text"] ==
         "Ket qua la 255"
     );
+    assert(output["steps"][1]["tool_result"].is_null());
+    assert(output["steps"][0]["tool_result"] == "255");
 
     std::cout
         << "[PASS] Trajectory JSON tests\n";

@@ -33,11 +33,19 @@ json toJson(const Step& step)
         step.action
     );
 
+    // FinalAnswer không thực thi tool nên không có tool result. Dùng null thay
+    // cho chuỗi rỗng để consumer phân biệt rõ "không áp dụng" với một tool
+    // thực sự trả về output rỗng.
+    const json tool_result_json =
+        std::holds_alternative<ToolCall>(step.action)
+            ? json(step.tool_result)
+            : json(nullptr);
+
     return {
         {"step_id", step.step_id},
         {"thought", step.thought},
         {"action", action_json},
-        {"tool_result", step.tool_result},
+        {"tool_result", tool_result_json},
         {"tokens_used", step.tokens_used},
         {"latency_ms", step.latency_ms}
     };
