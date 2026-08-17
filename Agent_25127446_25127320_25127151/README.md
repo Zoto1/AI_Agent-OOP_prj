@@ -36,6 +36,7 @@
 sudo apt update
 sudo apt install cmake g++ \
     libcurl4-openssl-dev \
+    zlib1g-dev \
     nlohmann-json3-dev \
     libsqlite3-dev
 ```

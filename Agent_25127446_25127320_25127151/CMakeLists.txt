@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
 # ==================================================
 # Project
@@ -20,8 +20,25 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # ==================================================
 # Dependencies
 # ==================================================
-find_package(CURL REQUIRED)
-find_package(nlohmann_json REQUIRED)
+# Trong WSL, FindCURL co the vo tinh nap CURLConfig.cmake cua MSYS2 tu
+# /mnt/c. Buoc build Linux phai dung FindCURL module va thu vien Linux.
+if(UNIX AND NOT APPLE)
+    set(CURL_NO_CURL_CMAKE TRUE)
+endif()
+
+find_package(CURL QUIET)
+if(NOT CURL_FOUND)
+    message(FATAL_ERROR
+        "Khong tim thay libcurl development cho Linux. Cai bang:\n"
+        "  sudo apt install libcurl4-openssl-dev zlib1g-dev")
+endif()
+
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+    message(FATAL_ERROR
+        "Khong tim thay nlohmann/json. Cai bang:\n"
+        "  sudo apt install nlohmann-json3-dev")
+endif()
 
 # ==================================================
 # Include
@@ -208,6 +225,11 @@ target_link_libraries(
     test_multi_agent
     PRIVATE
     OopAgentCore
+)
+
+add_test(
+    NAME MultiAgentTest
+    COMMAND test_multi_agent
 )
 
 add_executable(
