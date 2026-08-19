@@ -95,32 +95,69 @@ classDiagram
         -performSearchRequest(query: string) string
     }
     class Memory {
-        -memory_data: unordered_map~string,string~
+        -memory_data: unordered_map~string,Entry~  // Entry: value + embedding
+        -embedder_: shared_ptr~EmbeddingClient~
+        -persist_path_: string
+        -mtx_: mutex
         +execute(args: map~string,string~) string
         +clear_memory() void
         +init()$ void
         -save_context(key: string, value: string) bool
         -load_context(query: string) optional~string~
+        -load_by_embedding(query: string) optional~string~
+        -persist() void
+        -load_persisted() void
     }
     class CalculatorTool {
         +execute(args: map~string,string~) string
     }
+    class DateTimeTool {
+        +execute(args: map~string,string~) string
+    }
+    class HttpGetTool {
+        +execute(args: map~string,string~) string
+    }
+    class JsonParserTool {
+        +execute(args: map~string,string~) string
+    }
+    class EmbeddingClient {
+        <<abstract>>
+        +embed(text: string) vector~float~*
+        +getModelName() string*
+    }
+    class OllamaEmbeddingClient {
+        -base_url: string
+        -model: string
+        -timeout_ms: int
+        -curl_handle: void*
+        +embed(text: string) vector~float~
+        +getModelName() string
+    }
+    EmbeddingClient <|-- OllamaEmbeddingClient
     Tool <|-- ExecTool
     Tool <|-- FileReadTool
     Tool <|-- FileWriteTool
     Tool <|-- WebSearchTool
     Tool <|-- Memory
     Tool <|-- CalculatorTool
+    Tool <|-- DateTimeTool
+    Tool <|-- HttpGetTool
+    Tool <|-- JsonParserTool
+    Memory --> EmbeddingClient : embedder_ (10.2 vector search)
 
     class ToolRegistry {
         <<singleton>>
         -tools: map~string,shared_ptr~Tool~~
+        -denied_tools: unordered_set~string~
         +getInstance()$ ToolRegistry
         +registerTool(tool: shared_ptr~Tool~) void
         +executeTool(name: string, args: map~string,string~) string
         +hasTool(name: string) bool
         +describeToolsForPrompt() string
         +functionDeclarationsJson() string
+        +denyTool(name: string) void
+        +allowTool(name: string) void
+        +isAllowed(name: string) bool
     }
     ToolRegistry o-- "many" Tool : manages
 

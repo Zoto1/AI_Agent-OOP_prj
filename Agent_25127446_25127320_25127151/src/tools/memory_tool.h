@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <mutex>
 
 class Memory : public Tool {
 private:
@@ -19,6 +20,9 @@ private:
     std::unordered_map<std::string, Entry> memory_data;
     std::shared_ptr<EmbeddingClient> embedder_;
     std::string persist_path_;
+
+    // Bảo vệ memory_data khi nhiều sub-agent (10.3) gọi chung tool này.
+    mutable std::mutex mtx_;
 
     bool save_context(const std::string &key, const std::string &value);
     std::optional<std::string> load_context(const std::string &query) const;
