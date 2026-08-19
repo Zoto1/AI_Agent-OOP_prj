@@ -36,6 +36,7 @@
 sudo apt update
 sudo apt install cmake g++ \
     libcurl4-openssl-dev \
+    zlib1g-dev \
     nlohmann-json3-dev \
     libsqlite3-dev
 ```
@@ -256,7 +257,7 @@ Agent_25127446_25127320_25127151/
 │   │   ├── file_operations.md              # Skill: thao tác file an toàn trong workspace
 │   │   └── error_recovery.md              # Skill: phục hồi khi tool trả về lỗi
 │   │
-│   ├── tests/                                # Unit Tests (6 bộ test)
+│   ├── tests/                                # Unit & integration tests
 │   │   ├── test_agent_tool_call.cpp         # Test tích hợp: Agent gọi tool đúng
 │   │   ├── test_gemini_response.cpp         # Test parse response từ Gemini API
 │   │   ├── test_keyword_evaluator.cpp       # Test KeywordEvaluator
@@ -447,6 +448,11 @@ Hoặc chạy từng test riêng lẻ:
 ./build/test_termination_status
 ./build/test_agent_tool_call
 ./build/test_gemini_response
+./build/test_tools
+./build/test_exec_tool
+./build/test_harness_integration
+./build/test_embedding_memory
+./build/test_multi_agent
 ```
 
 | Test executable | CTest name | Nội dung |
@@ -457,6 +463,11 @@ Hoặc chạy từng test riêng lẻ:
 | `test_termination_status` | `TerminationStatusTest` | Kiểm tra enum → string conversion |
 | `test_agent_tool_call` | `AgentToolCallTest` | Test tích hợp: Agent nhận task và gọi tool đúng |
 | `test_gemini_response` | `GeminiResponseTest` | Kiểm tra parse multipart/function-call response từ Gemini |
+| `test_tools` | `ToolsTest` | Kiểm tra tool policy, file safety, calculator, JSON và memory |
+| `test_exec_tool` | `ExecToolTest` | Kiểm tra stdout, stderr, exit code và timeout của exec |
+| `test_harness_integration` | `HarnessIntegrationTest` | Chạy pipeline Harness end-to-end bằng Fake LLM, không gọi API |
+| `test_embedding_memory` | `EmbeddingMemoryTest` | Kiểm tra embedding search, persistence và fallback |
+| `test_multi_agent` | `MultiAgentTest` | Kiểm tra coordinator và chia subtask song song |
 
 ---
 

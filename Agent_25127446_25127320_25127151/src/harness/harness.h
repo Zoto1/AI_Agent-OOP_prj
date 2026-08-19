@@ -28,6 +28,7 @@ struct TaskDefinition {
 // Kết quả tổng hợp sau khi chạy + chấm điểm 1 task, dùng để in báo cáo batch
 struct TaskResult {
   std::string task_id;
+  std::string eval_type;
   bool success = false;
   double score = 0.0;
   long long total_time_ms = 0;

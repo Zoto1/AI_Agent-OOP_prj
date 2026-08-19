@@ -84,6 +84,30 @@ int main()
         assert(score == 0.0);
     }
 
+#ifndef _WIN32
+    {
+        CurrentPathGuard guard(test_workspace);
+        const std::string vietnam_time_script =
+            "test -s time.txt && grep -Eq '\\+0700$' time.txt && "
+            "ts=$(date -d \"$(cat time.txt)\" +%s) && now=$(date +%s) && "
+            "delta=$((now-ts)) && test ${delta#-} -le 300";
+
+        // UTC có timestamp đúng nhưng phải fail vì sai múi giờ Việt Nam.
+        {
+            std::ofstream time_file("time.txt");
+            time_file << "2026-08-17 03:53:01 +0000 UTC\n";
+        }
+        FunctionalEvaluator evaluator(vietnam_time_script);
+        assert(evaluator.evaluate(trajectory) == 0.0);
+
+        // Thời gian Việt Nam hiện tại, có offset +0700, phải pass.
+        assert(std::system(
+                   "TZ=Asia/Ho_Chi_Minh date '+%Y-%m-%d %H:%M:%S %z' "
+                   "> time.txt") == 0);
+        assert(evaluator.evaluate(trajectory) == 1.0);
+    }
+#endif
+
     fs::remove_all(test_workspace, error);
 
     std::cout

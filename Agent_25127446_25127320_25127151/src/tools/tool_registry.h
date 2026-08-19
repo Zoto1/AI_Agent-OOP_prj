@@ -29,4 +29,5 @@ public:
     void denyTool(const std::string& name);
     void allowTool(const std::string& name);
     bool isAllowed(const std::string& name) const;
+    void resetToolStates();
 };

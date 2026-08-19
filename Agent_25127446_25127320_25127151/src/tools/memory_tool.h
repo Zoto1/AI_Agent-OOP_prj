@@ -36,6 +36,7 @@ public:
                     std::string persist_path = "");
     ~Memory() override = default;
     void clear_memory();
+    void resetState() override { clear_memory(); }
     std::string execute(const std::map<std::string, std::string> &args) override;
     static void init();
 };

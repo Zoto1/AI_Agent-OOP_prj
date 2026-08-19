@@ -22,6 +22,9 @@ public:
     virtual ~Tool() = default;
 
     virtual std::string execute(const std::map<std::string, std::string>& args) = 0;
+    // Hook vòng đời: Harness gọi trước mỗi benchmark task để tránh trạng thái
+    // session của task trước rò sang task sau. Tool stateless không cần override.
+    virtual void resetState() {}
 
     std::string getName() const { return name; }
     std::string getDescription() const { return description; }

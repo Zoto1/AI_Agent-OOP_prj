@@ -18,16 +18,19 @@
 
 #include <iostream>
 #include <memory>
+#include <print>
 #include <string>
 
 // In hướng dẫn sử dụng khi gọi sai
 static void printUsage(const char* prog) {
-    std::cout << "Usage:\n"
-              << "  " << prog << "                              # interactive REPL\n"
-              << "  " << prog << " --benchmark <tasks.json>     # chay toan bo benchmark\n"
-              << "  " << prog << " --run-task <id> <tasks.json> # chay 1 task cu the\n"
-              << "  " << prog << " --verbose                    # in chi tiet moi buoc\n"
-              << "  " << prog << " --config <config.json>       # duong dan config LLM\n";
+    std::print(
+        "Usage:\n"
+        "  {}                              # interactive REPL\n"
+        "  {} --benchmark <tasks.json>     # chay toan bo benchmark\n"
+        "  {} --run-task <id> <tasks.json> # chay 1 task cu the\n"
+        "  {} --verbose                    # in chi tiet moi buoc\n"
+        "  {} --config <config.json>       # duong dan config LLM\n",
+        prog, prog, prog, prog, prog);
 }
 
 int main(int argc, char* argv[]) {
@@ -89,31 +92,29 @@ int main(int argc, char* argv[]) {
         // ── Chọn chế độ chạy ─────────────────────────────────────────────────
         if (mode == "benchmark") {
             // Chạy toàn bộ tập task, in báo cáo success rate
-            std::cout << "[Benchmark] Chay tap task: " << tasks_json << "\n";
+            std::println("[Benchmark] Chay tap task: {}", tasks_json);
             HarnessRunner harness(llm, registry, skills, detector,
                                   "results/", "workspace/");
             auto results = harness.runBatch(tasks_json);
-            harness.printReport(results);
+            (void)results; // runBatch đã in và xuất báo cáo.
             return 0;
 
         } else if (mode == "run-task") {
             // Chạy 1 task theo ID, in kết quả
-            std::cout << "[RunTask] task_id=" << task_id
-                      << " file=" << tasks_json << "\n";
+            std::println("[RunTask] task_id={} file={}", task_id, tasks_json);
             HarnessRunner harness(llm, registry, skills, detector,
                                   "results/", "workspace/");
             TaskResult res = harness.runSingleTask(tasks_json, task_id);
-            std::cout << (res.success ? "[PASS]" : "[FAIL]")
-                      << " score=" << res.score
-                      << " time=" << res.total_time_ms << "ms"
-                      << " tokens=" << res.total_tokens << "\n";
+            std::println("{} score={} time={}ms tokens={}",
+                         res.success ? "[PASS]" : "[FAIL]", res.score,
+                         res.total_time_ms, res.total_tokens);
             if (res.error.has_value())
-                std::cerr << "Error: " << res.error.value() << "\n";
+                std::println(stderr, "Error: {}", res.error.value());
             return res.success ? 0 : 1;
 
         } else {
             // ── Interactive REPL (chế độ mặc định) ───────────────────────────
-            std::cout << "Nhap yeu cau (go 'exit' de thoat):\n";
+            std::println("Nhap yeu cau (go 'exit' de thoat):");
             AgentLoop agent(llm, registry, skills, detector, 10);
             agent.setVerbose(verbose);
 
@@ -125,7 +126,7 @@ int main(int argc, char* argv[]) {
                 AgentRunResult result = agent.run(task);
                 if (!verbose) {
                     if (result.status == AgentTerminationStatus::Completed) {
-                        std::cout << result.final_answer << "\n";
+                        std::println("{}", result.final_answer);
                     } else {
                         std::cout << "[Agent terminated with status: "
                                   << agentTerminationStatusToString(result.status)
@@ -137,9 +138,9 @@ int main(int argc, char* argv[]) {
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "Loi khoi dong: " << e.what() << "\n";
-        std::cerr << "Hay copy config.gemini.sample.json thanh config.json "
-                     "va dat GEMINI_API_KEY.\n";
+        std::println(stderr, "Loi khoi dong: {}", e.what());
+        std::println(stderr, "Hay copy config.gemini.sample.json thanh "
+                             "config.json va dat GEMINI_API_KEY.");
         return 1;
     }
 }

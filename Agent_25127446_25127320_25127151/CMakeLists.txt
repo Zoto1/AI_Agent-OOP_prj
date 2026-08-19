@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
 # ==================================================
 # Project
@@ -20,8 +20,25 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # ==================================================
 # Dependencies
 # ==================================================
-find_package(CURL REQUIRED)
-find_package(nlohmann_json REQUIRED)
+# Trong WSL, FindCURL co the vo tinh nap CURLConfig.cmake cua MSYS2 tu
+# /mnt/c. Buoc build Linux phai dung FindCURL module va thu vien Linux.
+if(UNIX AND NOT APPLE)
+    set(CURL_NO_CURL_CMAKE TRUE)
+endif()
+
+find_package(CURL QUIET)
+if(NOT CURL_FOUND)
+    message(FATAL_ERROR
+        "Khong tim thay libcurl development cho Linux. Cai bang:\n"
+        "  sudo apt install libcurl4-openssl-dev zlib1g-dev")
+endif()
+
+find_package(nlohmann_json QUIET)
+if(NOT nlohmann_json_FOUND)
+    message(FATAL_ERROR
+        "Khong tim thay nlohmann/json. Cai bang:\n"
+        "  sudo apt install nlohmann-json3-dev")
+endif()
 
 # ==================================================
 # Include
@@ -210,6 +227,11 @@ target_link_libraries(
     OopAgentCore
 )
 
+add_test(
+    NAME MultiAgentTest
+    COMMAND test_multi_agent
+)
+
 add_executable(
     test_tools
     src/tests/test_tools.cpp
@@ -224,6 +246,44 @@ target_link_libraries(
 add_test(
     NAME ToolsTest
     COMMAND test_tools
+)
+
+# --------------------------------------------------
+# Exec tool: stdout, stderr, exit code and timeout
+# --------------------------------------------------
+add_executable(
+    test_exec_tool
+    src/tests/test_exec_tool.cpp
+)
+
+target_link_libraries(
+    test_exec_tool
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME ExecToolTest
+    COMMAND test_exec_tool
+)
+
+# --------------------------------------------------
+# Harness end-to-end with a fake LLM (no external API)
+# --------------------------------------------------
+add_executable(
+    test_harness_integration
+    src/tests/test_harness_integration.cpp
+)
+
+target_link_libraries(
+    test_harness_integration
+    PRIVATE
+    OopAgentCore
+)
+
+add_test(
+    NAME HarnessIntegrationTest
+    COMMAND test_harness_integration
 )
 
 # --------------------------------------------------
