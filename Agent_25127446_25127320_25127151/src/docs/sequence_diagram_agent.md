@@ -1,145 +1,150 @@
-# SEQUENCE DIAGRAM – Agent Run Flow
+# SEQUENCE DIAGRAM — Một lần Agent Run hoàn chỉnh
 
-Mô tả luồng thực thi đầy đủ từ khi `HarnessRunner::runTask()` được gọi đến khi trả về `TaskResult`.
+Mô tả luồng thực thi đầy đủ **một lần `AgentLoop::run(task)`** từ khi *nhận task*
+đến khi *trả kết quả* (`AgentRunResult`). Đây là lõi ReAct loop được dùng chung bởi
+cả chế độ REPL (`main.cpp`) lẫn Benchmark (`HarnessRunner`).
 
 ---
 
-## Sơ đồ tổng thể (Happy Path – Tool Call → Final Answer)
+## Happy Path: tool call → … → final answer
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant MAIN as main.cpp
-    participant HR as HarnessRunner
-    participant ENV as Environment
+    participant CALLER as Caller<br/>(REPL / HarnessRunner)
     participant AL as AgentLoop
     participant SL as SkillLoader
-    participant LLM as LLMClient
     participant TR as ToolRegistry
+    participant LLM as LLMClient
     participant TOOL as Tool (concrete)
     participant LD as LoopDetector
-    participant EVAL as Evaluator
+    participant OBS as step_hook<br/>(Observer → Trajectory)
 
-    MAIN->>HR: runBatch(tasks_json_path)
-    HR->>HR: loadTasks(tasks_json_path)
-    HR-->>HR: tasks: vector<TaskDefinition>
+    Note over CALLER,AL: begin: run(task)
+    CALLER->>AL: run(task)
 
-    loop For each TaskDefinition
-        MAIN->>HR: runTask(task)
+    %% ---- setup history ----
+    AL->>AL: history.clear()
+    AL->>AL: step_history.clear()
+    AL->>AL: buildSystemMessage(task)
 
-        %% Environment setup
-        HR->>ENV: setup()
-        ENV-->>HR: OK
+    %% inject skill
+    AL->>SL: select_skill(task)
+    SL-->>AL: optional<Skill>
+    Note over AL,SL: Skill ghi chú vào system prompt
 
-        %% Build AgentLoop with injected dependencies
-        HR->>AL: new AgentLoop(llm, toolRegistry, skillLoader, loopDetector, max_steps)
-        HR->>AL: setStepHook(hook) [Observer Pattern]
+    %% inject tool descriptions
+    AL->>TR: describeToolsForPrompt()
+    TR-->>AL: text liệt kê tools + schema
 
-        %% Agent Run starts
-        HR->>AL: run(task.instruction)
+    AL->>AL: history.push_back(system_msg)
+    AL->>AL: history.push_back(user_msg{role=user, content=task})
 
-        %% Build system message
-        AL->>AL: buildSystemMessage(task)
-        AL->>SL: select_skill(task)
-        SL-->>AL: optional<Skill>
-        Note over AL,SL: Skill hướng dẫn agent cách hoàn thành task
+    %% ══════════════════ ReAct LOOP ══════════════════
+    loop i = 0 .. max_steps - 1
+        AL->>AL: cur_step = Step{step_id=i}
 
-        AL->>AL: history.push_back(system_msg)
-        AL->>AL: history.push_back(user_msg)
+        %% ── THINK ────────────────────────────────────────
+        AL->>TR: functionDeclarationsJson()
+        TR-->>AL: JSON function declarations
+        AL->>LLM: safeChatWithTools(history, declarations)
+        LLM-->>AL: std::expected<LLMResponse,string>
 
-        loop AgentLoop (max_steps iterations)
-            %% ── THINK ──────────────────────────────────────────
-            AL->>LLM: chatWithTools(history, function_declarations_json)
-            LLM-->>AL: LLMResponse {text, tool_call?, usage}
+        opt has_error (API/lỗi mạng)
+            AL->>AL: throw LLMClientError / APIEnvironmentError
+            Note over AL: exception bắt bởi caller (Harness ghi AgentError)
+        end
 
-            alt Native function call returned
-                AL->>AL: parsed_action = ToolCall from LLMToolCall
-                Note over AL: thought = JSON description of call
-            else Text response
-                AL->>AL: act(thought)
-                AL->>AL: parseToolCall(response)
-                alt Tool call JSON found
-                    AL-->>AL: parsed_action = ToolCall
-                else Final answer JSON found
-                    AL->>AL: parseFinalAnswer(response)
-                    AL-->>AL: parsed_action = FinalAnswer
-                else Format error
-                    AL->>AL: history.push_back(FORMAT_ERROR correction)
-                    Note over AL: continue to next iteration
-                end
-            end
+        Note over AL: LLMResponse { text, tool_call?, usage }
+        AL->>AL: cur_step.tokens_used = usage.total_tokens
+        AL->>AL: cur_step.latency_ms = elapsed
 
-            %% ── LOOP DETECTION (pre-execute) ────────────────────
-            AL->>LD: detect(step_history)
-            LD-->>AL: LoopResult {type, severity, message}
-
-            alt severity == CRITICAL
-                AL-->>HR: AgentRunResult {status=LoopDetected}
-                Note over AL,HR: Abort run immediately
-            else severity == WARNING
-                Note over AL,LD: Log warning, continue
-            end
-
-            %% ── ACT: ToolCall branch ────────────────────────────
-            alt action is ToolCall
-                AL->>TR: hasTool(tool_name)
-                TR-->>AL: true / false
-
-                alt tool exists
-                    AL->>TR: executeTool(tool_name, args)
-                    TR->>TOOL: execute(args)
-                    TOOL-->>TR: result string
-                    TR-->>AL: result string
-                else unknown tool
-                    AL-->>AL: result = "Error: unknown tool"
-                end
-
-                alt native call
-                    AL->>AL: history.push_back(FunctionResponse message)
-                else text-based call
-                    AL->>AL: observe("Tool result: " + result)
-                    Note over AL: adds tool role message to history
-                end
-
-                AL->>AL: cur_step.tool_result = result
-                AL->>AL: step_hook(cur_step) [notify Harness]
-                HR-->>HR: hook appends Step to Trajectory
-
-                %% ── LOOP DETECTION (post-execute) ───────────────
-                AL->>LD: detect(step_history) [re-check after result]
-                LD-->>AL: LoopResult
-
-                alt CRITICAL after result
-                    AL-->>HR: AgentRunResult {status=LoopDetected}
-                end
-
-            %% ── ACT: FinalAnswer branch ─────────────────────────
-            else action is FinalAnswer
-                AL->>AL: step_hook(cur_step)
-                AL-->>HR: AgentRunResult {final_answer, status=Completed, total_tokens}
+        %% ── Parse action ──────────────────────────────────
+        alt native tool call (tool_call.has_value)
+            AL->>AL: ToolCall{native_call.name, native_call.args}
+            AL->>AL: thought = JSON mô tả tool call
+        else text response
+            AL->>AL: thought = model_response.text
+            AL->>AL: act(thought) → parseToolCall()
+            alt tìm thấy {"type":"tool_call"}
+                AL->>AL: parsed_action = ToolCall
+            else tìm thấy {"type":"final_answer"}
+                AL->>AL: parsed_action = FinalAnswer
+            else sau ≥1 tool đã chạy và là văn xuôi
+                AL->>AL: parsed_action = FinalAnswer{text}
+            else format không hợp lệ
+                AL->>AL: history.push_back(FORMAT_ERROR msg)
+                Note over AL: continue → iteration kế tiếp
             end
         end
 
-        %% max_steps exceeded
-        AL-->>HR: AgentRunResult {status=MaxStepsReached}
+        AL->>AL: history.push_back(assistant_message)
+        AL->>AL: step_history.push_back(cur_step)
 
-        %% Build Trajectory from collected steps
-        HR->>HR: Build Trajectory {task_id, model, steps, tokens, time, status}
+        %% ── Loop detection (pre-execute) ─────────────────
+        AL->>LD: detect(step_history)
+        LD-->>AL: LoopResult{type, sev, message}
+        alt severity == CRITICAL
+            AL->>OBS: step_hook(cur_step)
+            AL-->>CALLER: AgentRunResult{status=LoopDetected}
+            Note over AL,CALLER: abort ngay
+        else WARNING / NORMAL
+            Note over AL,LD: logging cảnh báo, tiếp tục
+        end
 
-        %% Evaluate
-        HR->>EVAL: evaluate(trajectory)
-        EVAL-->>HR: optional<double> score
+        %% ── ACT ───────────────────────────────────────────
+        alt action is FinalAnswer
+            AL->>OBS: step_hook(cur_step)
+            AL-->>CALLER: AgentRunResult{final_answer, status=Completed, total_tokens}
+        else action is ToolCall
+            AL->>TR: hasTool(tool_call.tool)
+            TR-->>AL: true / false
+            alt tool tồn tại
+                AL->>TR: executeTool(name, parsed_args)
+                TR->>TOOL: execute(args)
+                TOOL-->>TR: result string
+                TR-->>AL: result string
+            else tool không tồn tại
+                AL->>AL: result = "Error: unknown tool '...'"
+            end
 
-        %% Export
-        HR->>HR: exportTrajectory(trajectory)  → results/trajectory_{id}.json
+            alt native call
+                AL->>AL: history.push_back(FunctionResponse msg)
+            else text-based call
+                AL->>AL: observe("Tool result: ...") → "tool" role
+            end
 
-        %% Environment teardown
-        HR->>ENV: teardown()
+            AL->>AL: has_executed_tool = true
+            AL->>AL: cur_step.tool_result = result
+            AL->>OBS: step_hook(cur_step)
+            Note over OBS: Trajectory.steps.push_back(step)
 
-        HR-->>MAIN: TaskResult {task_id, success, score, time, tokens}
+            %% ── Loop detection (post-execute) ────────────
+            AL->>LD: detect(step_history) [sau khi có tool_result]
+            LD-->>AL: LoopResult
+            alt CRITICAL sau result
+                AL-->>CALLER: AgentRunResult{status=LoopDetected}
+            end
+        end
     end
 
-    HR->>HR: exportBenchmarkSummary(results)
-    HR->>HR: printReport(results)
-    HR-->>MAIN: vector<TaskResult>
+    %% ── max_steps hết ─────────────────────────────────-----
+    AL-->>CALLER: AgentRunResult{status=MaxStepsReached}
+
+    Note over AL,CALLER: end: AgentRunResult<br/>final_answer + status (Completed / LoopDetected / MaxStepsReached)
 ```
+
+---
+
+## Luồng rút gọn theo trạng thái kết thúc
+
+| Điều kiện | `AgentRunResult.status` |
+| --- | --- |
+| Model trả `final_answer` JSON (hoặc văn xuôi sau khi đã chạy tool) | `Completed` |
+| `LoopDetector` báo `CRITICAL` (GenericRepeat ≥ 4 lần giống hệt, hoặc PingPong ≥ 4 cặp) | `LoopDetected` |
+| Vòng lặp chạy đủ `max_steps` mà chưa có final answer | `MaxStepsReached` |
+| `safeChatWithTools` → `std::unexpected` (API key / mạng / rate-limit) | ném exception → caller map sang `AgentError` |
+
+> Ghi chú triển khai (`src/agent/agent_loop.cpp`): `step_hook` là `std::function`.
+> Ở chế độ REPL không set hook; ở chế độ benchmark `HarnessRunner` set hook để
+> *thu thập* `Step` vào `Trajectory` mà không can thiệp logic agent.

@@ -1,6 +1,6 @@
 # OOP AI Agent
 
-> Framework AI Agent viết bằng **C++17**, hỗ trợ nhiều LLM Provider (Gemini / Ollama), Tool Calling, Skill System, Benchmark Harness và phát hiện vòng lặp.
+> Framework AI Agent viết bằng **C++23** (Concepts, `std::expected`, `std::jthread`, `std::print`), hỗ trợ nhiều LLM Provider (Gemini / Ollama), Tool Calling, Skill System, Multi-Agent Coordination, Benchmark Harness và phát hiện vòng lặp.
 
 ---
 
@@ -17,7 +17,8 @@
 9. [Skill System](#9-skill-system)
 10. [Benchmark & Đánh giá](#10-benchmark--đánh-giá)
 11. [Unit Tests](#11-unit-tests)
-12. [Thành viên](#12-thành-viên)
+12. [Tài liệu thiết kế UML](#12-tài-liệu-thiết-kế-uml)
+13. [Thành viên](#13-thành-viên)
 
 ---
 
@@ -27,8 +28,8 @@
 
 **Công cụ:**
 
-- CMake >= 3.10
-- GCC / Clang hỗ trợ **C++17**
+- CMake >= 3.20
+- GCC >= 14 / Clang >= 18 (hỗ trợ **C++23**: `std::expected`, `std::print`, `std::jthread`, Concepts)
 
 **Cài đặt thư viện hệ thống:**
 
@@ -57,6 +58,7 @@ Sau khi build thành công, các file thực thi được tạo trong `build/`:
 | File thực thi | Mục đích |
 | --- | --- |
 | `build/agent_run` | Entry point chính — hỗ trợ REPL, benchmark, run-task |
+| `build/benchmark_run` | Chạy benchmark không qua CLI flags (`config.json tasks.json [task_id]`) |
 | `build/test_*` | Các file unit test |
 
 ---
@@ -218,35 +220,41 @@ Agent_25127446_25127320_25127151/
 ├── src/                                      # Toàn bộ source code
 │   │
 │   ├── agent/                                # Agent Loop & Điều phối suy luận
-│   │   ├── agent_loop.h / .cpp              # Vòng lặp ReAct: Think → Act → Observe
+│   │   ├── agent_loop.h / .cpp              # Vòng lặp ReAct: Think → Act → Observe (Template Method)
 │   │   ├── loop_detector.h / .cpp           # Phát hiện vòng lặp (GenericRepeat, PingPong)
 │   │   └── skill_loader.h / .cpp            # Nạp & chọn Markdown Skill theo keyword
 │   │
-│   ├── client/                               # LLM Client (giao tiếp với API)
-│   │   ├── llm_client.h                     # Abstract class LLMClient + các struct dùng chung
+│   ├── client/                               # LLM Client Layer
+│   │   ├── llm_client.h                     # Abstract LLMClient + struct dùng chung + concept LLMBackend
 │   │   ├── config_loader.h                  # Đọc config.json + fallback env var
-│   │   ├── gemini_client.h / .cpp           # Client cho Google Gemini API
-│   │   └── ollama_client.h / .cpp           # Client cho Ollama (local LLM)
+│   │   ├── gemini_client.h / .cpp           # Client Google Gemini API (native function calling)
+│   │   ├── ollama_client.h / .cpp           # Client Ollama (local LLM)
+│   │   ├── embedding_client.h               # Abstract EmbeddingClient + factory makeOllamaEmbeddingClient()
+│   │   └── ollama_embedding_client.h/.cpp   # Embedding qua Ollama (nomic-embed-text)
 │   │
 │   ├── tools/                                # Tool Registry & các Tool cụ thể
-│   │   ├── tool.h                           # Abstract class Tool (execute interface)
-│   │   ├── tool_registry.h / .cpp           # Singleton ToolRegistry: đăng ký & thực thi tool
+│   │   ├── tool.h                           # Abstract Tool (execute + resetState)
+│   │   ├── tool_registry.h / .cpp           # Singleton ToolRegistry (+ deny/allow tool policy)
 │   │   ├── calculator.h / .cpp              # Tool: tính toán biểu thức số học
 │   │   ├── exec.h / .cpp                    # Tool: thực thi lệnh shell (exec)
 │   │   ├── read.h / .cpp                    # Tool: đọc nội dung file (file_read)
 │   │   ├── write.h / .cpp                   # Tool: ghi nội dung vào file (file_write)
-│   │   ├── memory_tool.h / .cpp             # Tool: lưu trữ key-value trong session (memory)
-│   │   └── web_tool.h / .cpp               # Tool: tìm kiếm web (web_search)
+│   │   ├── memory_tool.h / .cpp             # Tool: memory (key-value + embedding search + persist JSON)
+│   │   ├── web_tool.h / .cpp                # Tool: tìm kiếm web (web_search)
+│   │   ├── datetime_tool.h / .cpp           # Tool: lấy thời gian hệ thống (datetime)
+│   │   ├── http_get_tool.h / .cpp           # Tool: gửi HTTP GET (http_get)
+│   │   └── json_parser_tool.h / .cpp        # Tool: parse JSON theo dot notation (json_parse)
 │   │
 │   ├── harness/                              # Benchmark Harness, Environment & Evaluator
 │   │   ├── harness.h / .cpp                 # HarnessRunner: điều phối pipeline benchmark
-│   │   ├── trajectory.h / .cpp             # Struct Step, Trajectory, TerminationStatus
+│   │   ├── trajectory.h / .cpp              # Struct Step, Trajectory, TerminationStatus
 │   │   ├── evaluator.h                      # Abstract class Evaluator
 │   │   ├── keyword_evaluator.h / .cpp       # Đánh giá bằng cách kiểm tra từ khóa
-│   │   ├── functional_evaluator.h / .cpp   # Đánh giá bằng cách chạy shell script
-│   │   ├── environnment.h                   # Abstract class Environment (setup/teardown)
-│   │   ├── Native_Environment.h / .cpp      # Môi trường thực: làm việc trực tiếp trên filesystem
-│   │   └── Sandbox_Environment.h / .cpp    # Môi trường cô lập: thư mục riêng mỗi task
+│   │   ├── functional_evaluator.h / .cpp    # Đánh giá bằng cách chạy shell script
+│   │   ├── environnment.h                   # Abstract class Environment (setup/teardown/execute)
+│   │   ├── Native_Environment.h / .cpp      # Môi trường thực: làm việc trên filesystem host
+│   │   ├── Sandbox_Environment.h / .cpp     # Môi trường cô lập: Docker container
+│   │   └── multi_agent_coordinator.h/.cpp   # Multi-agent: jthread + MessageQueue thread-safe
 │   │
 │   ├── benchmark/                            # Dataset & Entry point benchmark
 │   │   ├── task.json                        # 10 task benchmark (3 mức: DE / TB / KHO)
@@ -257,30 +265,39 @@ Agent_25127446_25127320_25127151/
 │   │   ├── file_operations.md              # Skill: thao tác file an toàn trong workspace
 │   │   └── error_recovery.md              # Skill: phục hồi khi tool trả về lỗi
 │   │
-│   ├── tests/                                # Unit & integration tests
-│   │   ├── test_agent_tool_call.cpp         # Test tích hợp: Agent gọi tool đúng
-│   │   ├── test_gemini_response.cpp         # Test parse response từ Gemini API
-│   │   ├── test_keyword_evaluator.cpp       # Test KeywordEvaluator
-│   │   ├── test_functional_evaluator.cpp    # Test FunctionalEvaluator (shell script)
-│   │   ├── test_trajectory.cpp              # Test serialization Trajectory → JSON
-│   │   └── test_termination_status.cpp      # Test enum TerminationStatus → string
+│   ├── tests/                                # Unit & integration tests (11 file)
+│   │   ├── test_agent_tool_call.cpp         # Agent gọi tool đúng
+│   │   ├── test_gemini_response.cpp         # Parse response từ Gemini API
+│   │   ├── test_keyword_evaluator.cpp       # KeywordEvaluator
+│   │   ├── test_functional_evaluator.cpp    # FunctionalEvaluator (shell script)
+│   │   ├── test_trajectory.cpp              # Serialization Trajectory → JSON
+│   │   ├── test_termination_status.cpp      # Enum TerminationStatus → string
+│   │   ├── test_tools.cpp                   # Tool policy, file safety, calculator, JSON, memory
+│   │   ├── test_exec_tool.cpp               # stdout/stderr/exit code/timeout của exec
+│   │   ├── test_harness_integration.cpp     # Pipeline Harness end-to-end (Fake LLM)
+│   │   ├── test_embedding_memory.cpp        # Embedding search + persistence + fallback
+│   │   └── test_multi_agent.cpp             # Coordinator + subtask song song
 │   │
-│   └── docs/                                 # Tài liệu kỹ thuật (đang phát triển)
+│   └── docs/                                 # Tài liệu thiết kế UML
+│       ├── class_diagram.md                 # Class Diagram toàn bộ hệ thống
+│       ├── component_diagram.md             # Component Diagram các module & dependency
+│       ├── sequence_diagram_agent.md        # Sequence Diagram 1 lần agent run
+│       └── sequence_diagram_harness.md      # Sequence Diagram HarnessRunner run batch
 │
-├── results/                                  # Output benchmark (tự động tạo)
+├── results/                                  # Output benchmark (tự động tạo, gitignored)
 │   ├── benchmark_summary.json               # Tổng hợp kết quả toàn bộ batch
 │   └── trajectory_task_001..010.json        # Chi tiết trajectory từng task
 │
-├── workspace/                                # Thư mục làm việc của Agent khi chạy benchmark
+├── workspace/                                # Workspace riêng từng task khi chạy benchmark (gitignored)
 │   ├── task_001/                            # Workspace riêng biệt cho task_001
 │   ├── task_002/
 │   └── ... (task_003 → task_010)
 │
 ├── test/                                     # (Thư mục trống — unit test nằm ở src/tests/)
-├── build/                                    # Build output — được tạo bởi CMake (không commit)
+├── build/                                    # Build output — được tạo bởi CMake (gitignored)
 ├── main.cpp                                 # Entry point chính cho agent_run
-├── config.json                              # Cấu hình API (không commit — chứa API Key)
-├── CMakeLists.txt                           # Build script CMake (C++17, targets: agent_run, benchmark_run, tests)
+├── config.json                              # Cấu hình API (gitignored — chứa API Key)
+├── CMakeLists.txt                           # Build script CMake (C++23, targets: agent_run, benchmark_run, tests)
 ├── .gitignore
 └── README.md
 ```
@@ -322,8 +339,26 @@ Project theo mô hình **ReAct (Reason + Act)** với các layer tách biệt ho
 
 - **AgentLoop không biết Harness tồn tại**: HarnessRunner inject `step_hook` vào AgentLoop từ bên ngoài (Observer/Hook pattern).
 - **Separation of Concerns**: `ConfigLoader` đọc config, `LLMClient` chỉ lo gọi API, `ToolRegistry` singleton quản lý tool.
-- **Polymorphism**: `LLMClient`, `Tool`, `Evaluator`, `Environment` đều là abstract class với pure virtual methods.
+- **Polymorphism**: `LLMClient`, `Tool`, `Evaluator`, `Environment`, `EmbeddingClient` đều là abstract class với pure virtual methods.
 - **Cô lập lỗi trong Benchmark**: 1 task lỗi không sập cả batch — mỗi task có workspace riêng.
+
+### Design Patterns được dùng
+
+| Pattern | Lớp / Vị trí | Mô tả |
+| --- | --- | --- |
+| **Template Method** | `AgentLoop::run()` = `think() → act() → observe()` | Skeleton ReAct; subclass override từng bước |
+| **Observer / Hook** | `AgentLoop::setStepHook()` → `HarnessRunner` | Agent không biết Harness, Harness thu thập `Step` |
+| **Strategy** | `Evaluator` / `EmbeddingClient` | Đổi thuật toán chấm điểm / embedding tại runtime |
+| **Singleton** | `ToolRegistry::getInstance()` | Registry tool dùng chung toàn app |
+| **Factory** | `makeOllamaEmbeddingClient()`, `makeAgentLoop<T>()`, `ConfigLoader` | Tạo object, ràng buộc compile-time (concept `LLMBackend`) |
+| **Template class** | `MessageQueue<T>` | Queue thread-safe cho multi-agent |
+
+### Multi-Agent Coordination (tóm tắt)
+
+`HarnessRunner::runMultiAgent(subtasks)` → `MultiAgentCoordinator::runParallel()`
+spawn mỗi subtask vào một `std::jthread` (C++20), các agent trao đổi qua
+`MessageQueue<AgentMessage>` (mutex + condition_variable), sau đó gộp kết quả.
+Chi tiết xem mục [10.4](#104-multi-agent-coordination).
 
 ---
 
@@ -343,7 +378,7 @@ Project theo mô hình **ReAct (Reason + Act)** với các layer tách biệt ho
 
 **Cách Agent gọi tool** (native function calling qua Gemini API):
 
-```basch
+```text
 LLM → { "tool_call": { "name": "calculator", "args": { "expression": "128/8" } } }
        → ToolRegistry::executeTool("calculator", args)
        → "16"
@@ -368,7 +403,7 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 
 ## 10. Benchmark & Đánh giá
 
-### Dataset (`src/benchmark/task.json`)
+### 10.1 Dataset (`src/benchmark/task.json`)
 
 10 task chia theo 3 mức độ:
 
@@ -385,14 +420,14 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 | **KHO** (Khó) | task_009 | Multi-step: tính tổng, lưu, đọc, cộng thêm, ghi đè |
 | **KHO** | task_010 | web_search + xử lý kết quả → lưu file |
 
-### Cơ chế đánh giá
+### 10.2 Cơ chế đánh giá
 
 | Eval type | Class | Cơ chế |
 | --- | --- | --- |
 | `keyword` | `KeywordEvaluator` | Kiểm tra `final_answer` có chứa tất cả từ khóa yêu cầu |
 | `functional` | `FunctionalEvaluator` | Chạy shell script (`eval_script`), exit code 0 = pass |
 
-### Bonus: Persistent Memory với Vector Search (mục 10.2)
+### 10.3 Persistent Memory với Vector Search (Bonus)
 
 `Memory` tool hỗ trợ **embedding-based similarity search** thay cho keyword search:
 
@@ -417,9 +452,41 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 
 Chạy `ollama pull nomic-embed-text` trước khi dùng. Các file liên quan: `src/client/embedding_client.h`, `src/client/ollama_embedding_client.h/.cpp`, `src/tools/memory_tool.h/.cpp`.
 
-### Kết quả benchmark mẫu
+### 10.4 Multi-Agent Coordination
 
-```basch
+Phân tách 1 task phức tạp thành nhiều `SubTaskDefinition` và chạy song song với nhiều agent:
+
+```bash
+./build/test_multi_agent          # test coordinator + subtask song song
+```
+
+Luồng thực thi:
+
+```text
+HarnessRunner::runMultiAgent(subtasks)
+        │
+        ▼
+MultiAgentCoordinator::runParallel(subtasks)
+        │  spawn 1 std::jthread / sub-agent (SubAgentHandle)
+        ├──▶ sub-agent 0: AgentLoop.run(subtask[0])
+        │        │  trao đổi qua MessageQueue (mutex + condition_variable)
+        ├──▶ sub-agent 1: AgentLoop.run(subtask[1])
+        │
+        ▼
+  futures.get() → vector<SubAgentResult>
+        │  mỗi sub-agent có trajectory riêng → export
+        ▼
+MultiAgentCoordinator::mergeResults(results) → chuỗi tổng hợp
+```
+
+- **SubAgentHandle**: quản lý vòng đời 1 sub-agent thread (`std::jthread` tự join khi hủy, `std::stop_token` cho cooperative cancellation).
+- **MessageQueue\<T\>**: template queue thread-safe (`push`, blocking `pop`, `try_pop`, `pop_for`, `close`).
+- **Cách dùng**: `splitTaskIntoSubtasks(instruction, num_agents)` chia task theo dòng; mỗi sub-agent nhận 1 instruction riêng.
+- Files: `src/harness/multi_agent_coordinator.h/.cpp`.
+
+### 10.5 Kết quả benchmark mẫu
+
+```text
 Total tasks  : 10
 Passed       : 10
 Failed       : 0
@@ -471,7 +538,20 @@ Hoặc chạy từng test riêng lẻ:
 
 ---
 
-## 12. Thành viên
+## 12. Tài liệu thiết kế UML
+
+Toàn bộ tài liệu kỹ thuật dạng **Mermaid** nằm trong `src/docs/` (xem được trực tiếp trên GitHub):
+
+| File | Nội dung |
+| --- | --- |
+| [`src/docs/class_diagram.md`](src/docs/class_diagram.md) | **Class Diagram** toàn bộ hệ thống: thể hiện rõ inheritance (`<|--`), composition (`*--`), aggregation (`o--`), dependency (`..>`) giữa các lớp |
+| [`src/docs/component_diagram.md`](src/docs/component_diagram.md) | **Component Diagram** tổng quan các module (`agent/`, `client/`, `tools/`, `harness/`, `benchmark/`, `skills/`) và quan hệ dependency |
+| [`src/docs/sequence_diagram_agent.md`](src/docs/sequence_diagram_agent.md) | **Sequence Diagram** một lần `AgentLoop::run()` hoàn chỉnh: từ khi nhận task → Think/Act/Observe → trả `AgentRunResult` |
+| [`src/docs/sequence_diagram_harness.md`](src/docs/sequence_diagram_harness.md) | **Sequence Diagram** `HarnessRunner::runBatch()` chạy batch evaluation: loadTasks → từng task (env → agent → evaluator) → báo cáo |
+
+---
+
+## 13. Thành viên
 
 | MSSV |
 | --- |
