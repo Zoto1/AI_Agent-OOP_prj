@@ -7,6 +7,7 @@
 #include <cctype>
 #include <map>
 #include <fstream>
+#include <filesystem>
 
 namespace
 {
@@ -144,6 +145,21 @@ Memory::Memory(std::shared_ptr<EmbeddingClient> embedder,
       embedder_(std::move(embedder)),
       persist_path_(std::move(persist_path))
 {
+    // 10.2 Persistent Memory: khóa đường dẫn lưu trữ thành tuyệt đối ngay lúc
+    // khởi tạo. HarnessRunner (CurrentPathGuard) chdir vào workspace riêng của
+    // từng task khi chạy benchmark; nếu giữ đường dẫn tương đối thì save() ghi
+    // vào thư mục workspace task còn load() đọc từ CWD cũ => mất persistence.
+    if (!persist_path_.empty())
+    {
+        persist_path_ = std::filesystem::absolute(persist_path_).lexically_normal().string();
+        const std::filesystem::path parent =
+            std::filesystem::path(persist_path_).parent_path();
+        if (!parent.empty())
+        {
+            std::error_code error;
+            std::filesystem::create_directories(parent, error);
+        }
+    }
     load_persisted();
 }
 
@@ -182,6 +198,7 @@ std::string Memory::execute(const std::map<std::string, std::string> &args)
 
 bool Memory::save_context(const std::string &key, const std::string &value)
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     if (key.empty())
     {
         return false;
@@ -211,6 +228,7 @@ bool Memory::save_context(const std::string &key, const std::string &value)
 
 std::optional<std::string> Memory::load_context(const std::string &query) const
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     auto found = memory_data.find(query);
     if (found != memory_data.end())
     {
@@ -378,6 +396,7 @@ void Memory::load_persisted()
 
 void Memory::clear_memory()
 {
+    std::lock_guard<std::mutex> lock(mtx_);
     memory_data.clear();
     if (!persist_path_.empty())
     {
