@@ -33,7 +33,6 @@ if(NOT CURL_FOUND)
         "  sudo apt install libcurl4-openssl-dev zlib1g-dev")
 endif()
 
-<<<<<<< HEAD
 find_package(nlohmann_json QUIET)
 if(NOT nlohmann_json_FOUND)
     message(FATAL_ERROR
@@ -46,16 +45,6 @@ if(NOT SQLite3_FOUND)
     message(FATAL_ERROR
         "Khong tim thay libsqlite3 development. Cai bang:\n"
         "  sudo apt install libsqlite3-dev")
-=======
-find_package(nlohmann_json QUIET)
-if(NOT nlohmann_json_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        nlohmann_json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-    )
-    FetchContent_MakeAvailable(nlohmann_json)
->>>>>>> 5287918 ( add multi-agent cmake, demo-multi-agent, update md files)
 endif()
 
 # ==================================================
@@ -117,7 +106,7 @@ target_link_libraries(
 )
 
 # ==================================================
-# Multi-agent demo executable
+# Multi-Agent Demo executable
 # ==================================================
 add_executable(
     demo_multi_agent
