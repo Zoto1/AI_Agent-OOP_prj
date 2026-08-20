@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <thread>
 
 namespace
 {
@@ -107,6 +109,87 @@ int main()
         assert(fuzzy == "Cpp");
 
         std::cout << "[PASS] trigram fallback without embedder\n";
+    }
+
+    // ---- 4. Persistence bền khi CWD thay đổi (harness chdir từng task) ----
+    // Mô phỏng flow thật: Memory khởi tạo ở CWD gốc (startup), sau đó harness
+    // chdir vào workspace task để save. Không có fix, save() sẽ ghi vào file
+    // trong thư mục workspace task => mất persistence.
+    {
+        namespace fs = std::filesystem;
+        auto fake = std::make_shared<FakeEmbeddingClient>();
+        const std::string store = remove_temp("memory_test_cwd.json");
+
+        std::string save_result;
+        {
+            Memory writer(fake, store);  // khóa đường dẫn tuyệt đối tại đây
+            writer.clear_memory();
+
+            const std::string old_cwd = fs::current_path().string();
+            fs::create_directories("memory_tmp_ws");
+            fs::current_path("memory_tmp_ws");
+
+            save_result = writer.execute({
+                {"action", "save"},
+                {"key", "location"},
+                {"value", "HCM"}
+            });
+
+            fs::current_path(old_cwd);
+            fs::remove_all("memory_tmp_ws");
+        }
+        assert(save_result == "True");
+
+        Memory reader(fake, store);
+        const std::string result = reader.execute({
+            {"action", "load"},
+            {"query", "location"}
+        });
+        assert(result == "HCM");
+
+        std::cout << "[PASS] persistence stable across CWD change (harness chdir)\n";
+    }
+
+    // ---- 5. An toàn khi nhiều sub-agent (10.3) gọi chung Memory ----
+    {
+        auto fake = std::make_shared<FakeEmbeddingClient>();
+        const std::string store = remove_temp("memory_test_thread.json");
+        Memory memory(fake, store);
+        memory.clear_memory();
+
+        std::vector<std::jthread> threads;
+        for (int t = 0; t < 4; ++t)
+        {
+            threads.emplace_back([&memory, t] {
+                for (int i = 0; i < 50; ++i)
+                {
+                    const std::string key =
+                        "key_" + std::to_string(t) + "_" + std::to_string(i);
+                    memory.execute({
+                        {"action", "save"},
+                        {"key", key},
+                        {"value", "v" + std::to_string(t)}
+                    });
+                    memory.execute({
+                        {"action", "load"},
+                        {"query", key}
+                    });
+                }
+            });
+        }
+        threads.clear();  // join tất cả thread
+
+        // Mọi entry phải còn nguyên vẹn sau khi chạy song song.
+        for (int t = 0; t < 4; ++t)
+        {
+            const std::string key = "key_" + std::to_string(t) + "_49";
+            assert(memory.execute({
+                       {"action", "load"},
+                       {"query", key}
+                   }) == "v" + std::to_string(t));
+        }
+
+        std::cout << "[PASS] thread-safe concurrent memory access\n";
     }
 
     std::cout << "[PASS] Memory embedding + persistence tests\n";
