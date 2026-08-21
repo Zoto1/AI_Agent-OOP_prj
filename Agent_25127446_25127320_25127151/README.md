@@ -218,7 +218,8 @@ Tính 2024 - 1999" 2 config.json
 ./build/agent_run --benchmark src/benchmark/task.json
 ```
 
-Chạy tất cả 10 task, ghi kết quả vào `results/`, in báo cáo success rate ra stdout.
+Mặc định chạy 10 task functional trong `task.json`. Bộ 10 task keyword được
+tách riêng trong `keyword_tasks.json`.
 
 ---
 
@@ -253,10 +254,16 @@ Chạy đúng 1 task, in kết quả `[PASS/FAIL]`, score, thời gian, token. E
 
 ## 5. Chạy Benchmark
 
-Chạy toàn bộ 10 task benchmark:
+Chạy bộ 10 task functional:
 
 ```bash
 ./build/agent_run --benchmark src/benchmark/task.json
+```
+
+Chạy bộ 10 task keyword:
+
+```bash
+./build/agent_run --benchmark src/benchmark/keyword_tasks.json
 ```
 
 Chạy 1 task cụ thể (ví dụ task_001):
@@ -333,7 +340,8 @@ Agent_25127446_25127320_25127151/
 │   │   └── multi_agent_coordinator.h/.cpp   # Multi-agent: jthread + MessageQueue thread-safe
 │   │
 │   ├── benchmark/                            # Dataset & Entry point benchmark
-│   │   ├── task.json                        # 10 task benchmark (3 mức: DE / TB / KHO)
+│   │   ├── task.json                        # 10 task FunctionalEvaluator
+│   │   ├── keyword_tasks.json               # 10 task KeywordEvaluator
 │   │   └── run_eval.cpp                     # main() cho benchmark_run executable
 │   │
 │   ├── skills/                               # Markdown Prompt Skills
@@ -471,9 +479,11 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 
 ## 10. Benchmark & Đánh giá
 
-### 10.1 Dataset (`src/benchmark/task.json`)
+### 10.1 Dataset (`src/benchmark/task.json`, `keyword_tasks.json`)
 
-10 task chia theo 3 mức độ:
+Hai file benchmark gồm 10 task FunctionalEvaluator và 10 task
+KeywordEvaluator; mỗi file được chia thành 4 task dễ, 4 task trung bình và 2
+task khó:
 
 | Mức | Task | Mô tả |
 | --- | --- | --- |
@@ -487,6 +497,9 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 | **TB** | task_008 | Exec có điều kiện kết hợp file_write |
 | **KHO** (Khó) | task_009 | Multi-step: tính tổng, lưu, đọc, cộng thêm, ghi đè |
 | **KHO** | task_010 | web_search + xử lý kết quả → lưu file |
+| **DE** | task_011–014 | calculator và JSON parser; chấm keyword trong final answer |
+| **TB** | task_015–018 | chuỗi phép tính, file, JSON và exec; yêu cầu nhiều keyword |
+| **KHO** | task_019–020 | phối hợp calculator, file và memory; yêu cầu nhiều keyword |
 
 ### 10.2 Cơ chế đánh giá
 

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "task_011",
+    "description": "[DE] Keyword - phep cong don gian",
+    "instruction": "Dung calculator tinh 25 + 17. Trong cau tra loi cuoi cung, hay neu ro ket qua 42.",
+    "eval_type": "keyword",
+    "eval_keywords": ["42"],
+    "max_steps": 4
+  },
+  {
+    "id": "task_012",
+    "description": "[DE] Keyword - phep chia don gian",
+    "instruction": "Dung calculator tinh 100 chia 4. Trong cau tra loi cuoi cung, hay neu ro ket qua 25.",
+    "eval_type": "keyword",
+    "eval_keywords": ["25"],
+    "max_steps": 4
+  },
+  {
+    "id": "task_013",
+    "description": "[DE] Keyword - phep nhan don gian",
+    "instruction": "Dung calculator tinh 9 nhan 9. Trong cau tra loi cuoi cung, hay neu ro ket qua 81.",
+    "eval_type": "keyword",
+    "eval_keywords": ["81"],
+    "max_steps": 4
+  },
+  {
+    "id": "task_014",
+    "description": "[DE] Keyword - parse JSON co dinh",
+    "instruction": "Dung tool json_parse de lay gia tri name tu JSON {\"name\":\"OopAgent\",\"version\":1}. Trong cau tra loi cuoi cung, hay neu ro OopAgent.",
+    "eval_type": "keyword",
+    "eval_keywords": ["OopAgent"],
+    "max_steps": 4
+  },
+  {
+    "id": "task_015",
+    "description": "[TB] Keyword - chuoi hai phep tinh",
+    "instruction": "Dung calculator tinh 7 nhan 8, sau do lay ket qua tru 6 bang calculator. Trong cau tra loi cuoi cung, hay neu ca ket qua trung gian 56 va ket qua cuoi 50.",
+    "eval_type": "keyword",
+    "eval_keywords": ["56", "50"],
+    "max_steps": 7
+  },
+  {
+    "id": "task_016",
+    "description": "[TB] Keyword - ghi va doc lai file",
+    "instruction": "Dung file_write ghi chinh xac 'Benchmark Keyword' vao keyword_note.txt, sau do dung file_read doc lai. Cau tra loi cuoi cung phai chua Benchmark Keyword va ten file keyword_note.txt.",
+    "eval_type": "keyword",
+    "eval_keywords": ["Benchmark Keyword", "keyword_note.txt"],
+    "max_steps": 7
+  },
+  {
+    "id": "task_017",
+    "description": "[TB] Keyword - truy xuat nhieu truong JSON",
+    "instruction": "Dung json_parse de lay city va year tu JSON {\"location\":{\"city\":\"HCM\"},\"year\":2026}. Cau tra loi cuoi cung phai neu HCM va 2026.",
+    "eval_type": "keyword",
+    "eval_keywords": ["HCM", "2026"],
+    "max_steps": 7
+  },
+  {
+    "id": "task_018",
+    "description": "[TB] Keyword - thuc thi lenh va doc output",
+    "instruction": "Dung tool exec chay lenh printf KEYWORD_OK. Cau tra loi cuoi cung phai neu KEYWORD_OK va xac nhan exec thanh cong.",
+    "eval_type": "keyword",
+    "eval_keywords": ["KEYWORD_OK", "exec"],
+    "max_steps": 6
+  },
+  {
+    "id": "task_019",
+    "description": "[KHO] Keyword - tinh toan, ghi file va doc lai",
+    "instruction": "Dung calculator tinh tong cac so tu 1 den 10, ghi ket qua vao sum_keyword.txt, doc lai file, sau do dung calculator cong them 100. Cau tra loi cuoi cung phai neu ket qua 155 va ten file sum_keyword.txt.",
+    "eval_type": "keyword",
+    "eval_keywords": ["155", "sum_keyword.txt"],
+    "max_steps": 12
+  },
+  {
+    "id": "task_020",
+    "description": "[KHO] Keyword - ket hop calculator, memory va file",
+    "instruction": "Dung calculator tinh (18 + 7) nhan 4. Luu value 'OopAgent' vao memory voi key 'project_name', truy xuat lai key, roi ghi project name va ket qua phep tinh vao keyword_report.txt. Cau tra loi cuoi cung phai neu OopAgent, 100 va keyword_report.txt.",
+    "eval_type": "keyword",
+    "eval_keywords": ["OopAgent", "100", "keyword_report.txt"],
+    "max_steps": 14
+  }
+]
