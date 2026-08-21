@@ -74,6 +74,16 @@ public:
                 std::string workspace_root = "workspace/",
                 double success_threshold = 1.0);
 
+  // C++26 — deleted functions with diagnostic messages (P2573R2).
+  // HarnessRunner giữ trạng thái của một lần chạy benchmark, vì vậy không
+  // được sao chép vô tình. Di chuyển vẫn được phép để chuyển ownership.
+  HarnessRunner(const HarnessRunner &) =
+      delete("HarnessRunner owns benchmark execution state and must not be copied");
+  HarnessRunner &operator=(const HarnessRunner &) =
+      delete("HarnessRunner owns benchmark execution state and must not be copied");
+  HarnessRunner(HarnessRunner &&) noexcept = default;
+  HarnessRunner &operator=(HarnessRunner &&) noexcept = default;
+
   TaskResult runTask(const TaskDefinition &task);
 
   TaskResult runSingleTask(const std::string &tasks_json_path,

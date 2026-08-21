@@ -29,7 +29,8 @@
 **Công cụ:**
 
 - CMake >= 3.20
-- GCC >= 14 / Clang >= 18 (hỗ trợ **C++23**: `std::expected`, `std::print`, `std::jthread`, Concepts)
+- GCC >= 15 (hỗ trợ **C++26**: deleted functions với diagnostic message;
+  đồng thời dùng `std::expected`, `std::print`, `std::jthread`, Concepts)
 
 **Cài đặt thư viện hệ thống:**
 
@@ -500,7 +501,8 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 
 - Khi `save`, nội dung được nhúng qua **`nomic-embed-text`** (Ollama `/api/embed`) và lưu kèm embedding.
 - Khi `load`, query được nhúng và tìm bằng **cosine similarity** trong C++ (`cosineSimilarityVectors`).
-- Memory được **persist** sang `memory_store.json` nên sống sót giữa các lần chạy.
+- Memory được **persist bằng SQLite** trong `memory_store.db` nên sống sót giữa
+  các lần chạy; vector embedding được lưu ở cột BLOB.
 - Nếu Ollama chưa chạy, tự động fallback về trigram vector search.
 
 **Cấu hình embedding trong `config.json`:**

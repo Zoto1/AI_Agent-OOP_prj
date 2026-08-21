@@ -47,7 +47,7 @@ int main()
     {
         auto fake = std::make_shared<FakeEmbeddingClient>();
         const std::string store =
-            remove_temp("memory_test_embedding.json");
+            remove_temp("memory_test_embedding.db");
         Memory memory(fake, store);
         memory.clear_memory();
 
@@ -71,7 +71,7 @@ int main()
     {
         auto fake = std::make_shared<FakeEmbeddingClient>();
         const std::string store =
-            remove_temp("memory_test_persist.json");
+            remove_temp("memory_test_persist.db");
 
         {
             Memory writer(fake, store);
@@ -118,7 +118,7 @@ int main()
     {
         namespace fs = std::filesystem;
         auto fake = std::make_shared<FakeEmbeddingClient>();
-        const std::string store = remove_temp("memory_test_cwd.json");
+        const std::string store = remove_temp("memory_test_cwd.db");
 
         std::string save_result;
         {
@@ -153,7 +153,7 @@ int main()
     // ---- 5. An toàn khi nhiều sub-agent (10.3) gọi chung Memory ----
     {
         auto fake = std::make_shared<FakeEmbeddingClient>();
-        const std::string store = remove_temp("memory_test_thread.json");
+        const std::string store = remove_temp("memory_test_thread.db");
         Memory memory(fake, store);
         memory.clear_memory();
 

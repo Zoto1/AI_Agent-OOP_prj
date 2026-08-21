@@ -10,10 +10,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==================================================
 # C++ Standard
 # ==================================================
-# Nâng lên C++23 để hỗ trợ:
+# Nâng lên C++26 để hỗ trợ:
 #   C++20: Concepts (LLMBackend), std::jthread
 #   C++23: std::expected<T,E>, std::print / std::println
-set(CMAKE_CXX_STANDARD 23)
+#   C++26: deleted functions with diagnostic messages
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
         singleton.registerTool(
             std::make_shared<Memory>(
                 makeOllamaEmbeddingClient(config_path),
-                "memory_store.json"
+                "memory_store.db"
             )
         );
 

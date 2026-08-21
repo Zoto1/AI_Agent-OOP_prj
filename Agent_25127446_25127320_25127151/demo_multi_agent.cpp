@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
         singleton.registerTool(std::make_shared<FileWriteTool>(
             "file_write", "Ghi noi dung vao file. Args: path, content", "./"));
         singleton.registerTool(std::make_shared<Memory>(
-            makeOllamaEmbeddingClient(config_path), "memory_store.json"));
+            makeOllamaEmbeddingClient(config_path), "memory_store.db"));
         singleton.registerTool(std::make_shared<WebSearchTool>());
         singleton.registerTool(std::make_shared<DateTimeTool>());
         singleton.registerTool(std::make_shared<HttpGetTool>());

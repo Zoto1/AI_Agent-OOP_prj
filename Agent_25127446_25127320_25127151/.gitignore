@@ -27,6 +27,12 @@ config.json
 # Logs
 *.log
 
+# Runtime persistent memory (SQLite + legacy JSON)
+memory_store.db
+memory_store.db-shm
+memory_store.db-wal
+memory_store.json
+
 # macOS
 .DS_Store
 
