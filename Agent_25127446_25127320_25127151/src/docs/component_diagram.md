@@ -16,6 +16,7 @@ flowchart TB
     %% ═══════════════════════ LAYERS ═══════════════════════
     subgraph ENTRY["🖥️ Entry Points (binaries)"]
         MAIN["main.cpp<br/>agent_run"]
+        MULTI["demo_multi_agent.cpp<br/>demo_multi_agent"]
         RUN_EVAL["run_eval.cpp<br/>benchmark_run"]
         TESTS["tests/*.cpp<br/>ctest"]
     end
@@ -83,6 +84,10 @@ flowchart TB
     RUN_EVAL --> CFG
     MAIN --> REGISTRY
     RUN_EVAL --> REGISTRY
+    MULTI --> HR
+    MULTI --> COORD
+    MULTI --> REGISTRY
+    MULTI --> CFG
 
     %% ═══════════════════════ Agent Core ═══════════════════════
     AGENTLOOP --> LLMCLIENT
@@ -151,7 +156,8 @@ flowchart TB
 | `tools/` | `client/` (EmbeddingClient), DuckDuckGo, exec | 9 tool có thể gọi từ LLM; ToolRegistry singleton |
 | `harness/` | `agent/`, `client/`, `tools/`, `benchmark/task.json`, filesystem | Điều phối benchmark, chấm điểm, multi-agent |
 | `benchmark/` | harness (qua `run_eval.cpp`) | Dataset 10 task benchmark |
-| `main.cpp` | tất cả các module | REPL interactive + CLI flags |
+| `main.cpp` | tất cả các module | Single-Agent REPL interactive + CLI flags |
+| `demo_multi_agent.cpp` | `client/`, `tools/`, `agent/`, `harness/` | Multi-Agent Interactive REPL & CLI parallel runner |
 
 ## Cách đọc component diagram
 

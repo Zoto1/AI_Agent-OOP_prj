@@ -9,7 +9,7 @@
 1. [Yêu cầu & Cài đặt](#1-yêu-cầu--cài-đặt)
 2. [Build project](#2-build-project)
 3. [Cấu hình API](#3-cấu-hình-api)
-4. [Chạy Agent (Interactive)](#4-chạy-agent-interactive)
+4. [Chạy Agent (Single-Agent & Multi-Agent)](#4-chạy-agent-single-agent--multi-agent)
 5. [Chạy Benchmark](#5-chạy-benchmark)
 6. [Cấu trúc project](#6-cấu-trúc-project)
 7. [Kiến trúc & Module](#7-kiến-trúc--module)
@@ -42,6 +42,8 @@ sudo apt install cmake g++ \
     libsqlite3-dev
 ```
 
+*(Lưu ý: Nếu hệ thống chưa có sẵn `nlohmann/json`, CMakeLists.txt sẽ tự động tải dự phòng qua FetchContent).*
+
 ---
 
 ## 2. Build project
@@ -57,9 +59,10 @@ Sau khi build thành công, các file thực thi được tạo trong `build/`:
 
 | File thực thi | Mục đích |
 | --- | --- |
-| `build/agent_run` | Entry point chính — hỗ trợ REPL, benchmark, run-task |
+| `build/agent_run` | Entry point chính — Single-Agent REPL (duy trì ngữ cảnh chuỗi), benchmark, run-task |
+| `build/demo_multi_agent` | Entry point Multi-Agent — Interactive REPL & CLI điều phối nhiều sub-agent song song |
 | `build/benchmark_run` | Chạy benchmark không qua CLI flags (`config.json tasks.json [task_id]`) |
-| `build/test_*` | Các file unit test |
+| `build/test_*` | Các file unit test (bao gồm `test_multi_agent`) |
 
 ---
 
@@ -103,13 +106,11 @@ export GEMINI_API_KEY="your_api_key_here"
 
 ---
 
-## 4. Chạy Agent
+## 4. Chạy Agent (Single-Agent & Multi-Agent)
 
-`agent_run` hỗ trợ **3 chế độ** qua CLI flags:
+### 4.1 Single-Agent Interactive REPL (`agent_run`)
 
-### 4.1 Interactive REPL (mặc định)
-
-Chạy Agent ở chế độ hội thoại tương tác:
+Dành cho các tác vụ hội thoại tương tác, có tính **tuần tự** và duy trì ngữ cảnh xuyên suốt các bước:
 
 ```bash
 ./build/agent_run
@@ -125,7 +126,7 @@ Chỉ định config khác hoặc bật verbose:
 
 **Ví dụ tương tác:**
 
-```
+```text
 Nhap yeu cau (go 'exit' de thoat):
 > Tính 128 chia 8 và lưu kết quả vào result.txt
 16
@@ -140,7 +141,77 @@ Agent dừng với một trong 3 trạng thái:
 | `LoopDetected` | Phát hiện vòng lặp (GenericRepeat / PingPong) |
 | `MaxStepsReached` | Đã chạy hết số bước tối đa (mặc định 10) |
 
-### 4.2 Benchmark — chạy toàn bộ tập task
+---
+
+### 4.2 Multi-Agent Interactive REPL (`demo_multi_agent`)
+
+Dành cho các tác vụ **phân tán song song** (embarrassingly parallel), điều phối đồng thời nhiều sub-agent trên các luồng `std::jthread` độc lập:
+
+```bash
+# Khởi động chế độ Interactive REPL (mặc định 3 sub-agents, config.json)
+./build/demo_multi_agent
+```
+
+Tuỳ chỉnh số lượng sub-agent và file cấu hình:
+
+```bash
+./build/demo_multi_agent -i 4             # Tối đa 4 sub-agents song song
+./build/demo_multi_agent -i 4 config.json # Chỉ định file cấu hình
+```
+
+#### Các cách sử dụng `demo_multi_agent`:
+
+1. **Gõ 1 dòng phân tách bởi dấu `;` trong REPL:**
+   ```text
+   multi-agent> Tính 15 * 17; Tính 2024 - 1999; Ghi dòng chữ 'Hello HCMUS' vào output.txt
+   ```
+   *Hệ thống tự động tách thành 3 subtask độc lập, kích hoạt 3 sub-agent chạy song song trên các thread `std::jthread` khác nhau và tổng hợp bảng kết quả Markdown.*
+
+2. **Chế độ soạn thảo nhiều dòng (`:multi`) trong REPL:**
+   ```text
+   multi-agent> :multi
+   --- Chế độ nhập nhiều dòng (nhập ':run' để chạy, ':cancel' để huỷ) ---
+    subtask #1> Tính căn bậc 2 của 144
+    subtask #2> Lấy ngày giờ hiện tại của hệ thống
+    subtask #3> :run
+   ```
+
+3. **Chạy batch one-shot trực tiếp từ dòng lệnh CLI (không cần vào REPL):**
+   ```bash
+   # Cách 1: Phân cách bằng dấu ';'
+   ./build/demo_multi_agent "Tính 15 * 17; Tính 2024 - 1999" 2 config.json
+
+   # Cách 2: Phân cách bằng ký tự xuống dòng '\n'
+   ./build/demo_multi_agent "Tính 15 * 17
+Tính 2024 - 1999" 2 config.json
+   ```
+
+4. **Thoát chương trình:**
+   ```text
+   multi-agent> exit
+   # hoặc: quit
+   ```
+
+5. **Xem trợ giúp:**
+   ```bash
+   ./build/demo_multi_agent --help
+   ```
+
+#### Bảng tổng hợp tham số dòng lệnh của `demo_multi_agent`:
+
+| Tham số | Ví dụ | Ý nghĩa |
+| --- | --- | --- |
+| *(không đối số)* | `./build/demo_multi_agent` | Chạy Interactive REPL với 3 sub-agents mặc định, đọc `config.json` |
+| `-i` / `--interactive` | `./build/demo_multi_agent -i 4 config.json` | Bật Interactive REPL với số sub-agent và file config chỉ định |
+| `"<task>"` | `./build/demo_multi_agent "Task A; Task B" 2` | Chạy batch one-shot task (phân tách bởi `;` hoặc `\n`) rồi thoát |
+| `-h` / `--help` | `./build/demo_multi_agent --help` | In cú pháp hướng dẫn sử dụng dòng lệnh |
+
+> **Lưu ý về tính độc lập của Multi-Agent:**
+> Trong mô hình Multi-Agent song song, mỗi sub-agent chạy độc lập trong thread riêng với ngữ cảnh (`m_history`) tách biệt tại thời điểm chạy. Đối với các tác vụ phụ thuộc logic bước trước $\rightarrow$ bước sau (như *lấy kết quả câu 1 để ghi vào câu 3*), hãy sử dụng Single-Agent `agent_run`.
+
+---
+
+### 4.3 Benchmark — chạy toàn bộ tập task
 
 ```bash
 ./build/agent_run --benchmark src/benchmark/task.json
@@ -148,7 +219,9 @@ Agent dừng với một trong 3 trạng thái:
 
 Chạy tất cả 10 task, ghi kết quả vào `results/`, in báo cáo success rate ra stdout.
 
-### 4.3 Run-task — chạy 1 task theo ID
+---
+
+### 4.4 Run-task — chạy 1 task theo ID
 
 ```bash
 ./build/agent_run --run-task task_001 src/benchmark/task.json
@@ -156,17 +229,19 @@ Chạy tất cả 10 task, ghi kết quả vào `results/`, in báo cáo success
 
 Chạy đúng 1 task, in kết quả `[PASS/FAIL]`, score, thời gian, token. Exit code = 0 nếu pass, 1 nếu fail.
 
-### 4.4 Xem trợ giúp
+---
+
+### 4.5 Xem trợ giúp CLI Flags
 
 ```bash
 ./build/agent_run --help
 ```
 
-**Tổng hợp tất cả flags:**
+**Tổng hợp tất cả flags của `agent_run`:**
 
 | Flag | Tham số | Mô tả |
 | --- | --- | --- |
-| *(không có)* | — | Interactive REPL |
+| *(không có)* | — | Interactive REPL (Single-Agent) |
 | `--benchmark` | `<tasks.json>` | Chạy toàn bộ benchmark |
 | `--run-task` | `<id> <tasks.json>` | Chạy 1 task theo ID |
 | `--verbose` | — | In chi tiết Thought / Tool Call / Observation |
@@ -191,7 +266,7 @@ Chạy 1 task cụ thể (ví dụ task_001):
 
 Kết quả được ghi tự động vào thư mục `results/`:
 
-```
+```text
 results/
 ├── benchmark_summary.json       # Tổng hợp: pass rate, score, thời gian
 ├── trajectory_task_001.json     # Chi tiết từng bước của task 001
@@ -201,7 +276,7 @@ results/
 
 **In báo cáo tổng hợp** (được in ra stdout sau khi benchmark hoàn tất):
 
-```
+```text
 [Benchmark Summary]
 Total tasks  : 10
 Passed       : 10
@@ -293,11 +368,10 @@ Agent_25127446_25127320_25127151/
 │   ├── task_002/
 │   └── ... (task_003 → task_010)
 │
-├── test/                                     # (Thư mục trống — unit test nằm ở src/tests/)
-├── build/                                    # Build output — được tạo bởi CMake (gitignored)
+├── demo_multi_agent.cpp                      # File thực thi tương tác Multi-Agent REPL
 ├── main.cpp                                 # Entry point chính cho agent_run
 ├── config.json                              # Cấu hình API (gitignored — chứa API Key)
-├── CMakeLists.txt                           # Build script CMake (C++23, targets: agent_run, benchmark_run, tests)
+├── CMakeLists.txt                           # Build script CMake (C++23, targets: agent_run, demo_multi_agent, benchmark_run, tests)
 ├── .gitignore
 └── README.md
 ```
@@ -352,13 +426,6 @@ Project theo mô hình **ReAct (Reason + Act)** với các layer tách biệt ho
 | **Singleton** | `ToolRegistry::getInstance()` | Registry tool dùng chung toàn app |
 | **Factory** | `makeOllamaEmbeddingClient()`, `makeAgentLoop<T>()`, `ConfigLoader` | Tạo object, ràng buộc compile-time (concept `LLMBackend`) |
 | **Template class** | `MessageQueue<T>` | Queue thread-safe cho multi-agent |
-
-### Multi-Agent Coordination (tóm tắt)
-
-`HarnessRunner::runMultiAgent(subtasks)` → `MultiAgentCoordinator::runParallel()`
-spawn mỗi subtask vào một `std::jthread` (C++20), các agent trao đổi qua
-`MessageQueue<AgentMessage>` (mutex + condition_variable), sau đó gộp kết quả.
-Chi tiết xem mục [10.4](#104-multi-agent-coordination).
 
 ---
 
@@ -452,15 +519,53 @@ Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent
 
 Chạy `ollama pull nomic-embed-text` trước khi dùng. Các file liên quan: `src/client/embedding_client.h`, `src/client/ollama_embedding_client.h/.cpp`, `src/tools/memory_tool.h/.cpp`.
 
-### 10.4 Multi-Agent Coordination
+### 10.4 Multi-Agent Coordination (Bonus)
 
-Phân tách 1 task phức tạp thành nhiều `SubTaskDefinition` và chạy song song với nhiều agent:
+Phân tách 1 task phức tạp thành nhiều `SubTaskDefinition` và điều phối chạy song song đa luồng với nhiều sub-agent:
 
-```bash
-./build/test_multi_agent          # test coordinator + subtask song song
-```
+#### A. Cách chạy trên Terminal
 
-Luồng thực thi:
+1. **Khởi động Interactive Multi-Agent Console (REPL):**
+   ```bash
+   ./build/demo_multi_agent                  # Mặc định tối đa 3 sub-agents
+   ./build/demo_multi_agent -i 4             # Tùy chỉnh số lượng sub-agents (vd: 4)
+   ./build/demo_multi_agent -i 4 config.json # Chỉ định file config
+   ```
+
+2. **Cách gõ lệnh trong Console `multi-agent>`:**
+   * **Cách 1: Gõ 1 dòng phân tách bởi dấu `;`**
+     ```text
+     multi-agent> Tính 15 * 17; Tính 2024 - 1999; Ghi nội dung 'DONE' vào status.txt
+     ```
+     *Mỗi mệnh đề ngăn cách bởi dấu `;` sẽ được tự động phân cho 1 sub-agent riêng biệt chạy song song trên 1 thread `std::jthread`.*
+
+   * **Cách 2: Chế độ soạn nhiều dòng (`:multi`)**
+     ```text
+     multi-agent> :multi
+     --- Chế độ nhập nhiều dòng (nhập ':run' để chạy, ':cancel' để huỷ) ---
+      subtask #1> Tính 100 * 25
+      subtask #2> Lấy ngày giờ hiện tại
+      subtask #3> :run
+     ```
+
+   * **Cách 3: Thoát chương trình**
+     ```text
+     multi-agent> exit
+     ```
+
+3. **Chạy trực tiếp từ dòng lệnh CLI (Batch / One-shot):**
+   ```bash
+   ./build/demo_multi_agent "Tính 15 * 17\nTính 2024 - 1999" 2 config.json
+   ```
+
+4. **Chạy Unit Test tự động cho Multi-Agent:**
+   ```bash
+   ./build/test_multi_agent
+   ```
+
+---
+
+#### B. Kiến trúc & Luồng thực thi
 
 ```text
 HarnessRunner::runMultiAgent(subtasks)
@@ -471,29 +576,21 @@ MultiAgentCoordinator::runParallel(subtasks)
         ├──▶ sub-agent 0: AgentLoop.run(subtask[0])
         │        │  trao đổi qua MessageQueue (mutex + condition_variable)
         ├──▶ sub-agent 1: AgentLoop.run(subtask[1])
+        │        │
+        ├──▶ sub-agent N: AgentLoop.run(subtask[N])
         │
         ▼
   futures.get() → vector<SubAgentResult>
-        │  mỗi sub-agent có trajectory riêng → export
+        │  mỗi sub-agent có trajectory riêng → export kết quả
         ▼
-MultiAgentCoordinator::mergeResults(results) → chuỗi tổng hợp
+MultiAgentCoordinator::mergeResults(results) → Bảng tổng hợp Markdown
 ```
 
-- **SubAgentHandle**: quản lý vòng đời 1 sub-agent thread (`std::jthread` tự join khi hủy, `std::stop_token` cho cooperative cancellation).
-- **MessageQueue\<T\>**: template queue thread-safe (`push`, blocking `pop`, `try_pop`, `pop_for`, `close`).
-- **Cách dùng**: `splitTaskIntoSubtasks(instruction, num_agents)` chia task theo dòng; mỗi sub-agent nhận 1 instruction riêng.
-- Files: `src/harness/multi_agent_coordinator.h/.cpp`.
-
-### 10.5 Kết quả benchmark mẫu
-
-```text
-Total tasks  : 10
-Passed       : 10
-Failed       : 0
-Success rate : 100%
-Avg score    : 0.20
-Avg time/task: ~3694 ms
-```
+- **SubAgentHandle**: quản lý vòng đời 1 sub-agent thread (`std::jthread` tự join khi hủy qua RAII, `std::stop_token` cho cooperative cancellation).
+- **MessageQueue<T>**: template class thread-safe queue (`push`, blocking `pop`, `try_pop`, `pop_for`, `close`).
+- **Phân tách subtask**: `splitTaskIntoSubtasks(instruction, num_agents)` tự động bẻ nhỏ task theo ký tự xuống dòng `\n` hoặc dấu `;`.
+- **Độc lập ngữ cảnh (Context Isolation)**: Mỗi sub-agent sở hữu một `AgentLoop` riêng biệt chạy đồng thời. Đối với bài toán cần dữ liệu tuần tự từ bước trước, hãy sử dụng Single-Agent `agent_run`.
+- **Files liên quan**: `src/harness/multi_agent_coordinator.h/.cpp`, `demo_multi_agent.cpp`, `src/tests/test_multi_agent.cpp`.
 
 ---
 

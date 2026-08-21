@@ -40,6 +40,13 @@ if(NOT nlohmann_json_FOUND)
         "  sudo apt install nlohmann-json3-dev")
 endif()
 
+find_package(SQLite3 QUIET)
+if(NOT SQLite3_FOUND)
+    message(FATAL_ERROR
+        "Khong tim thay libsqlite3 development. Cai bang:\n"
+        "  sudo apt install libsqlite3-dev")
+endif()
+
 # ==================================================
 # Include
 # ==================================================
@@ -67,6 +74,7 @@ target_link_libraries(
     PUBLIC
     CURL::libcurl
     nlohmann_json::nlohmann_json
+    SQLite::SQLite3
 )
 
 # ==================================================
@@ -93,6 +101,20 @@ add_executable(
 
 target_link_libraries(
     benchmark_run
+    PRIVATE
+    OopAgentCore
+)
+
+# ==================================================
+# Multi-Agent Demo executable
+# ==================================================
+add_executable(
+    demo_multi_agent
+    demo_multi_agent.cpp
+)
+
+target_link_libraries(
+    demo_multi_agent
     PRIVATE
     OopAgentCore
 )

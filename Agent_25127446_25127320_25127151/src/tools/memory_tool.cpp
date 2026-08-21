@@ -1,12 +1,11 @@
 #include "memory_tool.h"
 #include "tool_registry.h"
 
-#include <nlohmann/json.hpp>
+#include <sqlite3.h>
 
 #include <cmath>
 #include <cctype>
 #include <map>
-#include <fstream>
 #include <filesystem>
 
 namespace
@@ -159,8 +158,48 @@ Memory::Memory(std::shared_ptr<EmbeddingClient> embedder,
             std::error_code error;
             std::filesystem::create_directories(parent, error);
         }
+
+        const char *create_sql =
+            "CREATE TABLE IF NOT EXISTS memory("
+            "key TEXT PRIMARY KEY,"
+            "value TEXT NOT NULL,"
+            "embedding BLOB)";
+
+        // III.3.2: memory lưu qua SQLite thay vì JSON.
+        if (sqlite3_open(persist_path_.c_str(), &db_) == SQLITE_OK)
+        {
+            char *error_message = nullptr;
+            int result = sqlite3_exec(db_, create_sql, nullptr, nullptr, &error_message);
+            if (result != SQLITE_OK)
+            {
+                if (error_message != nullptr)
+                {
+                    sqlite3_free(error_message);
+                }
+                // File cũ là JSON (phiên bản trước) -> xóa và tạo DB mới.
+                sqlite3_close(db_);
+                db_ = nullptr;
+                std::error_code remove_error;
+                std::filesystem::remove(persist_path_, remove_error);
+                if (sqlite3_open(persist_path_.c_str(), &db_) == SQLITE_OK)
+                {
+                    sqlite3_exec(db_, create_sql, nullptr, nullptr, nullptr);
+                }
+            }
+        }
+
+        load_all_from_db();
     }
-    load_persisted();
+}
+
+Memory::~Memory()
+{
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (db_ != nullptr)
+    {
+        sqlite3_close(db_);
+        db_ = nullptr;
+    }
 }
 
 std::string Memory::execute(const std::map<std::string, std::string> &args)
@@ -222,7 +261,10 @@ bool Memory::save_context(const std::string &key, const std::string &value)
     }
 
     memory_data[key] = std::move(entry);
-    persist();
+    if (!persist_entry(key, memory_data.at(key)))
+    {
+        // DB không khả dụng (Ollama/đĩa lỗi) -> vẫn giữ entry trong RAM.
+    }
     return true;
 }
 
@@ -313,95 +355,103 @@ std::optional<std::string> Memory::load_by_embedding(const std::string &query) c
     return std::nullopt;
 }
 
-void Memory::persist() const
+void Memory::exec_simple(const char *sql)
 {
-    if (persist_path_.empty())
+    if (db_ == nullptr)
     {
         return;
     }
-
-    try
+    sqlite3_stmt *statement = nullptr;
+    if (sqlite3_prepare_v2(db_, sql, -1, &statement, nullptr) == SQLITE_OK)
     {
-        nlohmann::json root = nlohmann::json::array();
-        for (const auto &[key, entry] : memory_data)
-        {
-            nlohmann::json item = {
-                {"key", key},
-                {"value", entry.value},
-            };
-            if (!entry.embedding.empty())
-            {
-                item["embedding"] = entry.embedding;
-            }
-            root.push_back(std::move(item));
-        }
-
-        std::ofstream file(persist_path_);
-        if (file.is_open())
-        {
-            file << root.dump(2);
-        }
-    }
-    catch (const std::exception &)
-    {
-        // Không để lỗi persist làm hỏng luồng chính của agent.
+        sqlite3_step(statement);
+        sqlite3_finalize(statement);
     }
 }
 
-void Memory::load_persisted()
+bool Memory::persist_entry(const std::string &key, const Entry &entry) const
 {
-    if (persist_path_.empty())
+    if (db_ == nullptr)
     {
-        return;
+        return false;
     }
 
-    std::ifstream file(persist_path_);
-    if (!file.is_open())
+    const char *sql =
+        "INSERT OR REPLACE INTO memory(key, value, embedding) VALUES(?,?,?)";
+    sqlite3_stmt *statement = nullptr;
+    if (sqlite3_prepare_v2(db_, sql, -1, &statement, nullptr) != SQLITE_OK)
     {
-        return;
+        return false;
     }
 
-    try
+    sqlite3_bind_text(statement, 1, key.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(statement, 2, entry.value.c_str(), -1, SQLITE_TRANSIENT);
+    if (entry.embedding.empty())
     {
-        nlohmann::json root;
-        file >> root;
-        if (!root.is_array())
+        sqlite3_bind_null(statement, 3);
+    }
+    else
+    {
+        sqlite3_bind_blob(
+            statement, 3, entry.embedding.data(),
+            static_cast<int>(entry.embedding.size() * sizeof(float)),
+            SQLITE_TRANSIENT);
+    }
+
+    const bool ok = sqlite3_step(statement) == SQLITE_DONE;
+    sqlite3_finalize(statement);
+    return ok;
+}
+
+bool Memory::load_all_from_db()
+{
+    if (db_ == nullptr)
+    {
+        return false;
+    }
+
+    const char *sql = "SELECT key, value, embedding FROM memory";
+    sqlite3_stmt *statement = nullptr;
+    if (sqlite3_prepare_v2(db_, sql, -1, &statement, nullptr) != SQLITE_OK)
+    {
+        return false;
+    }
+
+    while (sqlite3_step(statement) == SQLITE_ROW)
+    {
+        const auto *key_text = sqlite3_column_text(statement, 0);
+        const auto *value_text = sqlite3_column_text(statement, 1);
+        if (key_text == nullptr || value_text == nullptr)
         {
-            return;
+            continue;
         }
 
-        for (const auto &item : root)
+        Entry entry;
+        entry.value = reinterpret_cast<const char *>(value_text);
+        if (sqlite3_column_type(statement, 2) == SQLITE_BLOB)
         {
-            if (!item.contains("key") || !item.contains("value"))
+            const void *blob = sqlite3_column_blob(statement, 2);
+            const int byte_count = sqlite3_column_bytes(statement, 2);
+            if (blob != nullptr && byte_count > 0 &&
+                byte_count % static_cast<int>(sizeof(float)) == 0)
             {
-                continue;
+                const auto *begin = static_cast<const float *>(blob);
+                const auto *end = begin + byte_count / static_cast<int>(sizeof(float));
+                entry.embedding.assign(begin, end);
             }
-            Entry entry;
-            entry.value = item["value"].get<std::string>();
-            if (item.contains("embedding") && item["embedding"].is_array())
-            {
-                for (const auto &value : item["embedding"])
-                {
-                    entry.embedding.push_back(value.get<float>());
-                }
-            }
-            memory_data[item["key"].get<std::string>()] = std::move(entry);
         }
+        memory_data[reinterpret_cast<const char *>(key_text)] = std::move(entry);
     }
-    catch (const std::exception &)
-    {
-        memory_data.clear();
-    }
+
+    sqlite3_finalize(statement);
+    return true;
 }
 
 void Memory::clear_memory()
 {
     std::lock_guard<std::mutex> lock(mtx_);
     memory_data.clear();
-    if (!persist_path_.empty())
-    {
-        std::ofstream file(persist_path_, std::ios::trunc);
-    }
+    exec_simple("DELETE FROM memory");
 }
 
 void Memory::init()
