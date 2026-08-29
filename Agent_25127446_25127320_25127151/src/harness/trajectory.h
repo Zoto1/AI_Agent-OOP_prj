@@ -2,34 +2,10 @@
 
 #include <nlohmann/json_fwd.hpp>
 
+#include "../agent/step.h"
+
 #include <string>
-#include <variant>
 #include <vector>
-
-struct ToolCall
-{
-    std::string tool;
-    std::string args;
-};
-
-struct FinalAnswer
-{
-    std::string text;
-};
-
-struct Step
-{
-    int step_id = 0;
-
-    std::string thought;
-
-    std::variant<ToolCall, FinalAnswer> action;
-
-    std::string tool_result;
-
-    long long tokens_used = 0;
-    long long latency_ms = 0;
-};
 
 enum class TerminationStatus
 {

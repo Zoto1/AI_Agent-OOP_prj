@@ -5,7 +5,7 @@
 #include <optional>
 #include <functional>
 #include <variant>
-#include "../harness/trajectory.h" // sử dụng Step
+#include "step.h"                  // sử dụng Step
 #include "../client/llm_client.h"  // sử dụng Message, LLMClient, LLMBackend
 
 // Forward declarations cho các class chưa được include

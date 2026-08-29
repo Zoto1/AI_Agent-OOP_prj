@@ -3,7 +3,7 @@
 #include <string>
 #include <optional>
 
-#include "../harness/trajectory.h"
+#include "step.h"
 
 enum class LoopType
 {
