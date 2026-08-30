@@ -560,9 +560,9 @@ Toàn bộ sơ đồ thiết kế chi tiết chuẩn Mermaid được lưu trữ
 
 | STT | Mã số sinh viên (MSSV) | Vai trò & Phân công |
 | :---: | :---: | :--- |
-| 1 | **25127446** | Agent Core (`AgentLoop`, `LoopDetector`, `SkillLoader`), C++ Modern Features |
-| 2 | **25127320** | LLM Client (`GeminiClient`, `OllamaClient`), Tool System (9 Tools, SQLite Memory) |
-| 3 | **25127151** | Harness Runner, Environment, Evaluators, Multi-Agent Coordination & Benchmark |
+| 1 | **25127320** | Agent Core (`AgentLoop`, `LoopDetector`, `SkillLoader`), C++ Modern Features |
+| 2 | **25127151** | LLM Client (`GeminiClient`, `OllamaClient`), Tool System (9 Tools, SQLite Memory) |
+| 3 | **25127446** | Harness Runner, Environment, Evaluators, Multi-Agent Coordination & Benchmark |
 
 ---
 *Thành phố Hồ Chí Minh, Năm 2026*
