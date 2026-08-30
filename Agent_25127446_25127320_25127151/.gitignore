@@ -32,6 +32,8 @@ memory_store.db
 memory_store.db-shm
 memory_store.db-wal
 memory_store.json
+sum.txt
+time.txt
 
 # macOS
 .DS_Store

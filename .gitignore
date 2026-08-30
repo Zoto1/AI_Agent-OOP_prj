@@ -1,0 +1,4 @@
+# Repository-local IDE and binary artifacts
+.vscode/
+mainMemory
+*_submission.zip
