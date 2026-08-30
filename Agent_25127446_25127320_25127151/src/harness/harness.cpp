@@ -638,6 +638,31 @@ TaskResult HarnessRunner::runTask(
 
 std::vector<TaskResult>
 HarnessRunner::runBatch(const std::string &tasks_json_path) {
+  return runBatch(std::vector<std::string>{tasks_json_path});
+}
+
+std::vector<TaskResult>
+HarnessRunner::runBatch(const std::vector<std::string> &tasks_json_paths) {
+  if (tasks_json_paths.empty()) {
+    throw std::runtime_error(
+        "Loi [HarnessRunner]: Can it nhat mot file benchmark.");
+  }
+
+  std::vector<TaskDefinition> tasks;
+  std::unordered_set<std::string> used_ids;
+
+  for (const std::string &tasks_json_path : tasks_json_paths) {
+    std::vector<TaskDefinition> file_tasks = loadTasks(tasks_json_path);
+    for (TaskDefinition &task : file_tasks) {
+      if (!used_ids.insert(task.id).second) {
+        throw std::runtime_error(
+            "Loi [HarnessRunner]: Trung task id giua cac file benchmark: '" +
+            task.id + "'.");
+      }
+      tasks.push_back(std::move(task));
+    }
+  }
+
   // Chi xoa trajectory cu; giu nguyen cac file ket qua khac.
   fs::create_directories(output_dir);
 
@@ -654,7 +679,6 @@ HarnessRunner::runBatch(const std::string &tasks_json_path) {
     }
   }
 
-  std::vector<TaskDefinition> tasks = loadTasks(tasks_json_path);
   std::vector<TaskResult> results;
   results.reserve(tasks.size());
 

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# CLASS DIAGRAM — Toàn bộ hệ thống
-=======
 # CLASS DIAGRAM — Toàn Bộ Hệ Thống
->>>>>>> 76d81ac ( modify md file)
 
 Sơ đồ lớp đầy đủ của framework `OopAgent`, mô tả kiến trúc phân tầng bao gồm: **LLM Client Layer**, **Tool System Layer**, **Skill System Layer**, **Common Core Types (`Step`, `ToolCall`, `FinalAnswer`)**, **Loop Detection Layer**, **Agent Core Layer**, **Environment Layer**, **Trajectory & Evaluator Layer**, **Multi-Agent Coordination Layer**, và **Harness Runner Layer**.
 
@@ -589,6 +585,7 @@ classDiagram
         +runTask(task: TaskDefinition) TaskResult
         +runSingleTask(tasks_json_path: string, task_id: string) TaskResult
         +runBatch(tasks_json_path: string) vector~TaskResult~
+        +runBatch(tasks_json_paths: vector~string~) vector~TaskResult~
         +printReport(results: vector~TaskResult~) void
         +runMultiAgent(subtasks: vector~SubTaskDefinition~) string
         +splitTaskIntoSubtasks(combined_instruction: string, num_agents: int)$ vector~SubTaskDefinition~
@@ -615,17 +612,6 @@ classDiagram
 
 ---
 
-<<<<<<< HEAD
-| Pattern | Lớp | Vai trò |
-| --- | --- | --- |
-| **Template Method** | `AgentLoop.run()` = `think() → act() → observe()` | Skeleton ReAct, subclass override từng bước |
-| **Observer / Hook** | `AgentLoop.setStepHook()` → `HarnessRunner` | Agent không biết Harness; Harness thu thập `Step` |
-| **Strategy** | `Evaluator` → `KeywordEvaluator` / `FunctionalEvaluator`; `EmbeddingClient` → `OllamaEmbeddingClient` | Chọn thuật toán tại runtime |
-| **Singleton** | `ToolRegistry` | Một registry dùng chung toàn app |
-| **Factory** | `makeOllamaEmbeddingClient()`, `makeAgentLoop<T>()`, `ConfigLoader::loadLLMConfig()` | Tạo object tránh harcode dependency |
-| **Template class** | `MessageQueue<T>` | Queue thread-safe dùng chung cho message |
-| **RAII / jthread** | `SubAgentHandle` | Tự join thread khi destructor |
-=======
 ## 🛠️ Bảng Tổng Kết Design Patterns & Kỹ Thuật Áp Dụng
 
 | Design Pattern / Nguyên lý | Vị trí áp dụng | Bản chất & Vai trò thiết kế |
@@ -637,4 +623,3 @@ classDiagram
 | **Factory Method** | `makeOllamaEmbeddingClient()`, `makeAgentLoop<T>()`, `ConfigLoader` | Khởi tạo đối tượng trừu tượng, tận dụng C++20 Concepts (`LLMBackend`) kiểm tra ràng buộc kiểu tại compile-time. |
 | **Producer-Consumer** | `MessageQueue<T>` | Template class hàng đợi an toàn đa luồng (`std::mutex` + `std::condition_variable`), phục vụ giao tiếp giữa các sub-agent. |
 | **Dependency Injection** | `AgentLoop`, `HarnessRunner`, `MultiAgentCoordinator` | Nhận dependencies qua `std::shared_ptr` (quan hệ Aggregation `o--`), giúp hệ thống đạt độ khớp nối lỏng (Loose Coupling) và dễ viết Unit Test độc lập. |
->>>>>>> 76d81ac ( modify md file)

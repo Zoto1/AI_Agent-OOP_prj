@@ -88,9 +88,12 @@ public:
 
   TaskResult runSingleTask(const std::string &tasks_json_path,
                            const std::string &task_id);
-  // Chạy toàn bộ benchmark/tasks.json, cô lập lỗi từng task (1 task lỗi không
-  // sập cả batch)
+  // Chạy một hoặc nhiều file task trong cùng một batch. Overload vector nạp
+  // toàn bộ task trước, dọn output đúng một lần và xuất một summary hợp nhất.
+  // Mỗi task vẫn được cô lập lỗi để một task lỗi không làm sập cả batch.
   std::vector<TaskResult> runBatch(const std::string &tasks_json_path);
+  std::vector<TaskResult>
+  runBatch(const std::vector<std::string> &tasks_json_paths);
 
   // In báo cáo tổng hợp: success rate tổng, breakdown theo eval_type
   // (mục 7.3/VIII đề bài)

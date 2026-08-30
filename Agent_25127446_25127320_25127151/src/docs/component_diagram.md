@@ -155,7 +155,7 @@ flowchart TB
 | `client/` | libcurl, nlohmann/json, Gemini/Ollama API | Gọi LLM, parse response, embedding search |
 | `tools/` | `client/` (EmbeddingClient), DuckDuckGo, exec | 9 tool có thể gọi từ LLM; ToolRegistry singleton |
 | `harness/` | `agent/`, `client/`, `tools/`, `benchmark/task.json`, filesystem | Điều phối benchmark, chấm điểm, multi-agent |
-| `benchmark/` | harness (qua `run_eval.cpp`) | Dataset 10 task benchmark |
+| `benchmark/` | harness (qua `run_eval.cpp`) | Dataset 20 task: 10 functional + 10 keyword |
 | `main.cpp` | tất cả các module | Single-Agent REPL interactive + CLI flags |
 | `demo_multi_agent.cpp` | `client/`, `tools/`, `agent/`, `harness/` | Multi-Agent Interactive REPL & CLI parallel runner |
 

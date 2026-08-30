@@ -20,13 +20,15 @@
 #include <memory>
 #include <print>
 #include <string>
+#include <vector>
 
 // In hướng dẫn sử dụng khi gọi sai
 static void printUsage(const char* prog) {
     std::print(
         "Usage:\n"
         "  {}                              # interactive REPL\n"
-        "  {} --benchmark <tasks.json>     # chay toan bo benchmark\n"
+        "  {} --benchmark <tasks.json> [more.json ...]\n"
+        "                                  # chay mot batch hop nhat\n"
         "  {} --run-task <id> <tasks.json> # chay 1 task cu the\n"
         "  {} --verbose                    # in chi tiet moi buoc\n"
         "  {} --config <config.json>       # duong dan config LLM\n",
@@ -40,6 +42,7 @@ int main(int argc, char* argv[]) {
         std::string config_path  = "config.json";
         std::string mode         = "repl";     // "repl" | "benchmark" | "run-task"
         std::string tasks_json;
+        std::vector<std::string> benchmark_paths;
         std::string task_id;
 
         for (int i = 1; i < argc; ++i) {
@@ -50,7 +53,7 @@ int main(int argc, char* argv[]) {
                 config_path = argv[++i];
             } else if (arg == "--benchmark" && i + 1 < argc) {
                 mode       = "benchmark";
-                tasks_json = argv[++i];
+                benchmark_paths.push_back(argv[++i]);
             } else if (arg == "--run-task" && i + 2 < argc) {
                 mode       = "run-task";
                 task_id    = argv[++i];
@@ -59,8 +62,14 @@ int main(int argc, char* argv[]) {
                 printUsage(argv[0]);
                 return 0;
             } else {
-                // fallback: nếu chỉ truyền 1 arg không nhận ra thì dùng làm config
-                config_path = arg;
+                // Sau --benchmark, các positional argument tiếp theo là các
+                // file task bổ sung. Config phải truyền rõ bằng --config.
+                if (mode == "benchmark" && !arg.starts_with("--")) {
+                    benchmark_paths.push_back(arg);
+                } else {
+                    // fallback cũ: một arg không nhận ra được dùng làm config
+                    config_path = arg;
+                }
             }
         }
 
@@ -91,11 +100,13 @@ int main(int argc, char* argv[]) {
 
         // ── Chọn chế độ chạy ─────────────────────────────────────────────────
         if (mode == "benchmark") {
-            // Chạy toàn bộ tập task, in báo cáo success rate
-            std::println("[Benchmark] Chay tap task: {}", tasks_json);
+            // Nạp tất cả file vào đúng một batch để trajectory và summary
+            // chứa trọn bộ functional + keyword.
+            std::println("[Benchmark] Chay {} file task trong mot batch",
+                         benchmark_paths.size());
             HarnessRunner harness(llm, registry, skills, detector,
                                   "results/", "workspace/");
-            auto results = harness.runBatch(tasks_json);
+            auto results = harness.runBatch(benchmark_paths);
             (void)results; // runBatch đã in và xuất báo cáo.
             return 0;
 

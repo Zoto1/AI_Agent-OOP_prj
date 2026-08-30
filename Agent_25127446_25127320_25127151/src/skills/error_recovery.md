@@ -1,5 +1,7 @@
 # Kỹ năng Phục hồi Lỗi (Error Recovery)
 
+Keywords: error, failure, failed, retry, recovery, tool error, exception, loop
+
 Trong quá trình thực thi, nếu công cụ trả về lỗi, chạy không thành công, hoặc hệ thống cảnh báo bạn đang bị lặp thao tác:
 
 1. Dừng ngay việc lặp lại chính xác hành động vừa gây ra lỗi.

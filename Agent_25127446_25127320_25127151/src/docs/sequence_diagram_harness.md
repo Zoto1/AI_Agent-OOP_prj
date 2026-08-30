@@ -1,6 +1,6 @@
 # SEQUENCE DIAGRAM — HarnessRunner chạy Batch Evaluation
 
-Mô tả pipeline benchmark từ khi `HarnessRunner::runBatch(tasks_json)` được gọi
+Mô tả pipeline benchmark từ khi `HarnessRunner::runBatch(task_files)` được gọi
 đến khi xuất `benchmark_summary.json` và trả về toàn bộ `TaskResult`.
 Sơ đồ này cho thấy vai trò *Director* của HarnessRunner: nó chỉ NỐI các layer
 (Environment → AgentLoop → Trajectory → Evaluator) mà không chứa logic suy luận.
@@ -12,7 +12,7 @@ sequenceDiagram
     autonumber
     participant MAIN as main.cpp / run_eval.cpp
     participant HR as HarnessRunner
-    participant TASK_JSON as benchmark/task.json
+    participant TASK_JSON as task.json + keyword_tasks.json
     participant ENV as Environment<br/>(NativeEnvironment)
     participant TR as ToolRegistry
     participant FS as results/ + workspace/
@@ -22,19 +22,20 @@ sequenceDiagram
     %% ────────────────────────────────────────────────────────────
     %% BATCH — STARTUP
     %% ────────────────────────────────────────────────────────────
-    MAIN->>HR: runBatch(tasks_json)
+    MAIN->>HR: runBatch({task.json, keyword_tasks.json})
 
     HR->>FS: create_directories(results/)
-    HR->>FS: xoá trajectory_*.json cũ
-
-    HR->>TASK_JSON: loadTasks(tasks_json_path)
-    TASK_JSON-->>HR: vector<TaskDefinition>
-    Note over HR,TASK_JSON: validate fields: id, instruction,<br/>max_steps, eval_type, eval_keywords/script
+    loop Với mỗi file task
+        HR->>TASK_JSON: loadTasks(tasks_json_path)
+        TASK_JSON-->>HR: vector<TaskDefinition>
+    end
+    Note over HR,TASK_JSON: validate fields và ID trùng<br/>trên toàn bộ batch trước khi dọn output
+    HR->>FS: xoá trajectory_*.json cũ đúng một lần
 
     %% ────────────────────────────────────────────────────────────
     %% BATCH — LOOP qua từng task
     %% ────────────────────────────────────────────────────────────
-    loop Với mỗi TaskDefinition [task_001..task_010]
+    loop Với mỗi TaskDefinition [task_001..task_020]
         MAIN->>HR: runTask(task)
 
         %% (1) Make environment + setup workspace

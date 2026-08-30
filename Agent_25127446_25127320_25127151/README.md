@@ -48,17 +48,11 @@ Dự án hiện thực một **AI Agent Framework** hoàn chỉnh viết hoàn t
 
 ---
 
-<<<<<<< HEAD
-- CMake >= 3.20
-- GCC >= 15 (hỗ trợ **C++26**: deleted functions với diagnostic message;
-  đồng thời dùng `std::expected`, `std::print`, `std::jthread`, Concepts)
-=======
 ## 2. Yêu cầu hệ thống & Cài đặt thư viện
->>>>>>> 76d81ac ( modify md file)
 
 ### Yêu cầu môi trường:
 - **Hệ điều hành:** Linux (Ubuntu 22.04 / 24.04 LTS) hoặc Windows Subsystem for Linux (WSL / WSL2).
-- **Trình biên dịch:** GCC $\ge$ 14.0 hoặc Clang $\ge$ 18.0 (hỗ trợ chuẩn **C++23** và các tính năng `std::expected`, `std::print`, `std::jthread`, Concepts).
+- **Trình biên dịch:** GCC $\ge$ 15.0 (hỗ trợ **C++26**, gồm deleted functions với diagnostic message; đồng thời hỗ trợ `std::expected`, `std::print`, `std::jthread` và Concepts).
 - **Công cụ build:** CMake $\ge$ 3.20.
 
 ### Cài đặt các thư viện phụ thuộc:
@@ -95,7 +89,7 @@ Sau khi biên dịch thành công, các file thực thi sẽ được sinh ra tr
 | :--- | :--- |
 | `build/agent_run` | **Entry point chính:** Single-Agent REPL, chạy benchmark toàn bộ hoặc chạy 1 task theo ID |
 | `build/demo_multi_agent` | **Entry point Multi-Agent:** Interactive Console / CLI chia subtask song song đa luồng |
-| `build/benchmark_run` | Chạy benchmark đơn giản trực tiếp theo đường dẫn file config và tasks |
+| `build/benchmark_run` | Mặc định chạy một batch 20 task; vẫn hỗ trợ chỉ định một file task |
 | `build/test_*` | Bộ 11 chương trình Unit & Integration Test |
 
 ---
@@ -115,450 +109,7 @@ Dự án đọc cấu hình từ file `config.json` đặt tại thư mục gố
     "max_tokens": 1024,
     "timeout_ms": 30000,
     "api_key": "YOUR_GEMINI_API_KEY"
-<<<<<<< HEAD
-  }
-}
-```
-
-**Ý nghĩa các trường:**
-
-| Trường | Kiểu | Ý nghĩa |
-| --- | --- | --- |
-| `base_url` | string | Endpoint của provider |
-| `model_name` | string | Tên model sử dụng |
-| `temperature` | float | Độ ngẫu nhiên của câu trả lời (0.0–1.0) |
-| `max_tokens` | int | Số token tối đa cho mỗi response |
-| `timeout_ms` | int | Thời gian chờ tối đa (milliseconds) |
-| `api_key` | string | API Key (ưu tiên file; fallback: biến môi trường `GEMINI_API_KEY`) |
-
-> **Lưu ý:** `config.json` đã được thêm vào `.gitignore`. Không commit file này lên Git vì chứa API Key.
-
-**Cách dùng biến môi trường thay thế:**
-
-```bash
-export GEMINI_API_KEY="your_api_key_here"
-```
-
----
-
-## 4. Chạy Agent (Single-Agent & Multi-Agent)
-
-### 4.1 Single-Agent Interactive REPL (`agent_run`)
-
-Dành cho các tác vụ hội thoại tương tác, có tính **tuần tự** và duy trì ngữ cảnh xuyên suốt các bước:
-
-```bash
-./build/agent_run
-```
-
-Chỉ định config khác hoặc bật verbose:
-
-```bash
-./build/agent_run --config my_config.json
-./build/agent_run --verbose
-./build/agent_run --verbose --config my_config.json
-```
-
-**Ví dụ tương tác:**
-
-```text
-Nhap yeu cau (go 'exit' de thoat):
-> Tính 128 chia 8 và lưu kết quả vào result.txt
-16
-> exit
-```
-
-Agent dừng với một trong 3 trạng thái:
-
-| Trạng thái | Mô tả |
-| --- | --- |
-| `Completed` | Hoàn thành, trả về `final_answer` |
-| `LoopDetected` | Phát hiện vòng lặp (GenericRepeat / PingPong) |
-| `MaxStepsReached` | Đã chạy hết số bước tối đa (mặc định 10) |
-
----
-
-### 4.2 Multi-Agent Interactive REPL (`demo_multi_agent`)
-
-Dành cho các tác vụ **phân tán song song** (embarrassingly parallel), điều phối đồng thời nhiều sub-agent trên các luồng `std::jthread` độc lập:
-
-```bash
-# Khởi động chế độ Interactive REPL (mặc định 3 sub-agents, config.json)
-./build/demo_multi_agent
-```
-
-Tuỳ chỉnh số lượng sub-agent và file cấu hình:
-
-```bash
-./build/demo_multi_agent -i 4             # Tối đa 4 sub-agents song song
-./build/demo_multi_agent -i 4 config.json # Chỉ định file cấu hình
-```
-
-#### Các cách sử dụng `demo_multi_agent`:
-
-1. **Gõ 1 dòng phân tách bởi dấu `;` trong REPL:**
-   ```text
-   multi-agent> Tính 15 * 17; Tính 2024 - 1999; Ghi dòng chữ 'Hello HCMUS' vào output.txt
-   ```
-   *Hệ thống tự động tách thành 3 subtask độc lập, kích hoạt 3 sub-agent chạy song song trên các thread `std::jthread` khác nhau và tổng hợp bảng kết quả Markdown.*
-
-2. **Chế độ soạn thảo nhiều dòng (`:multi`) trong REPL:**
-   ```text
-   multi-agent> :multi
-   --- Chế độ nhập nhiều dòng (nhập ':run' để chạy, ':cancel' để huỷ) ---
-    subtask #1> Tính căn bậc 2 của 144
-    subtask #2> Lấy ngày giờ hiện tại của hệ thống
-    subtask #3> :run
-   ```
-
-3. **Chạy batch one-shot trực tiếp từ dòng lệnh CLI (không cần vào REPL):**
-   ```bash
-   # Cách 1: Phân cách bằng dấu ';'
-   ./build/demo_multi_agent "Tính 15 * 17; Tính 2024 - 1999" 2 config.json
-
-   # Cách 2: Phân cách bằng ký tự xuống dòng '\n'
-   ./build/demo_multi_agent "Tính 15 * 17
-Tính 2024 - 1999" 2 config.json
-   ```
-
-4. **Thoát chương trình:**
-   ```text
-   multi-agent> exit
-   # hoặc: quit
-   ```
-
-5. **Xem trợ giúp:**
-   ```bash
-   ./build/demo_multi_agent --help
-   ```
-
-#### Bảng tổng hợp tham số dòng lệnh của `demo_multi_agent`:
-
-| Tham số | Ví dụ | Ý nghĩa |
-| --- | --- | --- |
-| *(không đối số)* | `./build/demo_multi_agent` | Chạy Interactive REPL với 3 sub-agents mặc định, đọc `config.json` |
-| `-i` / `--interactive` | `./build/demo_multi_agent -i 4 config.json` | Bật Interactive REPL với số sub-agent và file config chỉ định |
-| `"<task>"` | `./build/demo_multi_agent "Task A; Task B" 2` | Chạy batch one-shot task (phân tách bởi `;` hoặc `\n`) rồi thoát |
-| `-h` / `--help` | `./build/demo_multi_agent --help` | In cú pháp hướng dẫn sử dụng dòng lệnh |
-
-> **Lưu ý về tính độc lập của Multi-Agent:**
-> Trong mô hình Multi-Agent song song, mỗi sub-agent chạy độc lập trong thread riêng với ngữ cảnh (`m_history`) tách biệt tại thời điểm chạy. Đối với các tác vụ phụ thuộc logic bước trước $\rightarrow$ bước sau (như *lấy kết quả câu 1 để ghi vào câu 3*), hãy sử dụng Single-Agent `agent_run`.
-
----
-
-### 4.3 Benchmark — chạy toàn bộ tập task
-
-```bash
-./build/agent_run --benchmark src/benchmark/task.json
-```
-
-Mặc định chạy 10 task functional trong `task.json`. Bộ 10 task keyword được
-tách riêng trong `keyword_tasks.json`.
-
----
-
-### 4.4 Run-task — chạy 1 task theo ID
-
-```bash
-./build/agent_run --run-task task_001 src/benchmark/task.json
-```
-
-Chạy đúng 1 task, in kết quả `[PASS/FAIL]`, score, thời gian, token. Exit code = 0 nếu pass, 1 nếu fail.
-
----
-
-### 4.5 Xem trợ giúp CLI Flags
-
-```bash
-./build/agent_run --help
-```
-
-**Tổng hợp tất cả flags của `agent_run`:**
-
-| Flag | Tham số | Mô tả |
-| --- | --- | --- |
-| *(không có)* | — | Interactive REPL (Single-Agent) |
-| `--benchmark` | `<tasks.json>` | Chạy toàn bộ benchmark |
-| `--run-task` | `<id> <tasks.json>` | Chạy 1 task theo ID |
-| `--verbose` | — | In chi tiết Thought / Tool Call / Observation |
-| `--config` | `<config.json>` | Đường dẫn file config LLM (mặc định: `config.json`) |
-| `--help` / `-h` | — | In hướng dẫn sử dụng |
-
----
-
-## 5. Chạy Benchmark
-
-Chạy bộ 10 task functional:
-
-```bash
-./build/agent_run --benchmark src/benchmark/task.json
-```
-
-Chạy bộ 10 task keyword:
-
-```bash
-./build/agent_run --benchmark src/benchmark/keyword_tasks.json
-```
-
-Chạy 1 task cụ thể (ví dụ task_001):
-
-```bash
-./build/agent_run --run-task task_001 src/benchmark/task.json
-```
-
-Kết quả được ghi tự động vào thư mục `results/`:
-
-```text
-results/
-├── benchmark_summary.json       # Tổng hợp: pass rate, score, thời gian
-├── trajectory_task_001.json     # Chi tiết từng bước của task 001
-├── trajectory_task_002.json
-└── ...
-```
-
-**In báo cáo tổng hợp** (được in ra stdout sau khi benchmark hoàn tất):
-
-```text
-[Benchmark Summary]
-Total tasks  : 10
-Passed       : 10
-Failed       : 0
-Success rate : 100%
-Avg score    : 1
-Avg time/task: 14789 ms
-```
-
----
-
-## 6. Cấu trúc project
-
-```text
-Agent_25127446_25127320_25127151/
-├── src/                                      # Toàn bộ source code
-│   │
-│   ├── agent/                                # Agent Loop & Điều phối suy luận
-│   │   ├── agent_loop.h / .cpp              # Vòng lặp ReAct: Think → Act → Observe (Template Method)
-│   │   ├── loop_detector.h / .cpp           # Phát hiện vòng lặp (GenericRepeat, PingPong)
-│   │   └── skill_loader.h / .cpp            # Nạp & chọn Markdown Skill theo keyword
-│   │
-│   ├── client/                               # LLM Client Layer
-│   │   ├── llm_client.h                     # Abstract LLMClient + struct dùng chung + concept LLMBackend
-│   │   ├── config_loader.h                  # Đọc config.json + fallback env var
-│   │   ├── gemini_client.h / .cpp           # Client Google Gemini API (native function calling)
-│   │   ├── ollama_client.h / .cpp           # Client Ollama (local LLM)
-│   │   ├── embedding_client.h               # Abstract EmbeddingClient + factory makeOllamaEmbeddingClient()
-│   │   └── ollama_embedding_client.h/.cpp   # Embedding qua Ollama (nomic-embed-text)
-│   │
-│   ├── tools/                                # Tool Registry & các Tool cụ thể
-│   │   ├── tool.h                           # Abstract Tool (execute + resetState)
-│   │   ├── tool_registry.h / .cpp           # Singleton ToolRegistry (+ deny/allow tool policy)
-│   │   ├── calculator.h / .cpp              # Tool: tính toán biểu thức số học
-│   │   ├── exec.h / .cpp                    # Tool: thực thi lệnh shell (exec)
-│   │   ├── read.h / .cpp                    # Tool: đọc nội dung file (file_read)
-│   │   ├── write.h / .cpp                   # Tool: ghi nội dung vào file (file_write)
-│   │   ├── memory_tool.h / .cpp             # Tool: memory (key-value + embedding search + persist JSON)
-│   │   ├── web_tool.h / .cpp                # Tool: tìm kiếm web (web_search)
-│   │   ├── datetime_tool.h / .cpp           # Tool: lấy thời gian hệ thống (datetime)
-│   │   ├── http_get_tool.h / .cpp           # Tool: gửi HTTP GET (http_get)
-│   │   └── json_parser_tool.h / .cpp        # Tool: parse JSON theo dot notation (json_parse)
-│   │
-│   ├── harness/                              # Benchmark Harness, Environment & Evaluator
-│   │   ├── harness.h / .cpp                 # HarnessRunner: điều phối pipeline benchmark
-│   │   ├── trajectory.h / .cpp              # Struct Step, Trajectory, TerminationStatus
-│   │   ├── evaluator.h                      # Abstract class Evaluator
-│   │   ├── keyword_evaluator.h / .cpp       # Đánh giá bằng cách kiểm tra từ khóa
-│   │   ├── functional_evaluator.h / .cpp    # Đánh giá bằng cách chạy shell script
-│   │   ├── environnment.h                   # Abstract class Environment (setup/teardown/execute)
-│   │   ├── Native_Environment.h / .cpp      # Môi trường thực: làm việc trên filesystem host
-│   │   ├── Sandbox_Environment.h / .cpp     # Môi trường cô lập: Docker container
-│   │   └── multi_agent_coordinator.h/.cpp   # Multi-agent: jthread + MessageQueue thread-safe
-│   │
-│   ├── benchmark/                            # Dataset & Entry point benchmark
-│   │   ├── task.json                        # 10 task FunctionalEvaluator
-│   │   ├── keyword_tasks.json               # 10 task KeywordEvaluator
-│   │   └── run_eval.cpp                     # main() cho benchmark_run executable
-│   │
-│   ├── skills/                               # Markdown Prompt Skills
-│   │   ├── task_planner.md                 # Skill: lập kế hoạch, dùng ReAct loop
-│   │   ├── file_operations.md              # Skill: thao tác file an toàn trong workspace
-│   │   └── error_recovery.md              # Skill: phục hồi khi tool trả về lỗi
-│   │
-│   ├── tests/                                # Unit & integration tests (11 file)
-│   │   ├── test_agent_tool_call.cpp         # Agent gọi tool đúng
-│   │   ├── test_gemini_response.cpp         # Parse response từ Gemini API
-│   │   ├── test_keyword_evaluator.cpp       # KeywordEvaluator
-│   │   ├── test_functional_evaluator.cpp    # FunctionalEvaluator (shell script)
-│   │   ├── test_trajectory.cpp              # Serialization Trajectory → JSON
-│   │   ├── test_termination_status.cpp      # Enum TerminationStatus → string
-│   │   ├── test_tools.cpp                   # Tool policy, file safety, calculator, JSON, memory
-│   │   ├── test_exec_tool.cpp               # stdout/stderr/exit code/timeout của exec
-│   │   ├── test_harness_integration.cpp     # Pipeline Harness end-to-end (Fake LLM)
-│   │   ├── test_embedding_memory.cpp        # Embedding search + persistence + fallback
-│   │   └── test_multi_agent.cpp             # Coordinator + subtask song song
-│   │
-│   └── docs/                                 # Tài liệu thiết kế UML
-│       ├── class_diagram.md                 # Class Diagram toàn bộ hệ thống
-│       ├── component_diagram.md             # Component Diagram các module & dependency
-│       ├── sequence_diagram_agent.md        # Sequence Diagram 1 lần agent run
-│       └── sequence_diagram_harness.md      # Sequence Diagram HarnessRunner run batch
-│
-├── results/                                  # Output benchmark (tự động tạo, gitignored)
-│   ├── benchmark_summary.json               # Tổng hợp kết quả toàn bộ batch
-│   └── trajectory_task_001..010.json        # Chi tiết trajectory từng task
-│
-├── workspace/                                # Workspace riêng từng task khi chạy benchmark (gitignored)
-│   ├── task_001/                            # Workspace riêng biệt cho task_001
-│   ├── task_002/
-│   └── ... (task_003 → task_010)
-│
-├── demo_multi_agent.cpp                      # File thực thi tương tác Multi-Agent REPL
-├── main.cpp                                 # Entry point chính cho agent_run
-├── config.json                              # Cấu hình API (gitignored — chứa API Key)
-├── CMakeLists.txt                           # Build script CMake (C++23, targets: agent_run, demo_multi_agent, benchmark_run, tests)
-├── .gitignore
-└── README.md
-```
-
----
-
-## 7. Kiến trúc & Module
-
-Project theo mô hình **ReAct (Reason + Act)** với các layer tách biệt hoàn toàn:
-
-```text
-[User Task]
-     │
-     ▼
-┌──────────────────────────────────────────────────────┐
-│                      AgentLoop                       │
-│                                                      │
-│  ┌────────────┐   ┌────────────┐    ┌──────────────┐ │
-│  │   Think    │──▶│    Act     │──▶│   Observe    │ │
-│  │ (LLMClient)│   │ (ToolCall) │    │ (ToolResult) │ │
-│  └────────────┘   └────────────┘    └──────────────┘ │
-│        ▲                                             │
-│        │  inject system prompt + skills              │
-│   SkillLoader                                        │
-│        │                                             │
-│   LoopDetector (GenericRepeat / PingPong)            │
-└──────────────────────────────────────────────────────┘
-     │ step_hook (Observer pattern)
-     ▼
-┌──────────────────────────────────────┐
-│            HarnessRunner             │
-│   Environment  →  AgentLoop          │
-│   → Trajectory  →  Evaluator         │
-│   → trajectory_task_XXX.json         │
-└──────────────────────────────────────┘
-```
-
-### Các nguyên tắc thiết kế chính
-
-- **AgentLoop không biết Harness tồn tại**: HarnessRunner inject `step_hook` vào AgentLoop từ bên ngoài (Observer/Hook pattern).
-- **Separation of Concerns**: `ConfigLoader` đọc config, `LLMClient` chỉ lo gọi API, `ToolRegistry` singleton quản lý tool.
-- **Polymorphism**: `LLMClient`, `Tool`, `Evaluator`, `Environment`, `EmbeddingClient` đều là abstract class với pure virtual methods.
-- **Cô lập lỗi trong Benchmark**: 1 task lỗi không sập cả batch — mỗi task có workspace riêng.
-
-### Design Patterns được dùng
-
-| Pattern | Lớp / Vị trí | Mô tả |
-| --- | --- | --- |
-| **Template Method** | `AgentLoop::run()` = `think() → act() → observe()` | Skeleton ReAct; subclass override từng bước |
-| **Observer / Hook** | `AgentLoop::setStepHook()` → `HarnessRunner` | Agent không biết Harness, Harness thu thập `Step` |
-| **Strategy** | `Evaluator` / `EmbeddingClient` | Đổi thuật toán chấm điểm / embedding tại runtime |
-| **Singleton** | `ToolRegistry::getInstance()` | Registry tool dùng chung toàn app |
-| **Factory** | `makeOllamaEmbeddingClient()`, `makeAgentLoop<T>()`, `ConfigLoader` | Tạo object, ràng buộc compile-time (concept `LLMBackend`) |
-| **Template class** | `MessageQueue<T>` | Queue thread-safe cho multi-agent |
-
----
-
-## 8. Tools có sẵn
-
-| Tool name | Class | Mô tả |
-| --- | --- | --- |
-| `calculator` | `CalculatorTool` | Tính toán biểu thức số học (cộng, trừ, nhân, chia, lũy thừa) |
-| `exec` | `ExecTool` | Chạy lệnh shell và trả về stdout |
-| `file_read` | `FileReadTool` | Đọc nội dung một file trong workspace |
-| `file_write` | `FileWriteTool` | Ghi nội dung vào một file trong workspace |
-| `memory` | `Memory` | Lưu và truy xuất key-value trong session hiện tại (hỗ trợ vector search + embedding-based search + persist JSON) |
-| `web_search` | `WebSearchTool` | Tìm kiếm web qua DuckDuckGo Instant Answer API và trả về kết quả |
-| `datetime` | `DateTimeTool` | Lấy thời gian hệ thống theo định dạng `strftime` |
-| `http_get` | `HttpGetTool` | Gửi request HTTP GET và trả về nội dung response |
-| `json_parse` | `JsonParserTool` | Parse chuỗi JSON và truy xuất giá trị theo dot notation |
-
-**Cách Agent gọi tool** (native function calling qua Gemini API):
-
-```text
-LLM → { "tool_call": { "name": "calculator", "args": { "expression": "128/8" } } }
-       → ToolRegistry::executeTool("calculator", args)
-       → "16"
-       → Observation: "16"
-```
-
----
-
-## 9. Skill System
-
-`SkillLoader` quét thư mục `src/skills/`, đọc các file `.md`, và **tự động chọn skill phù hợp** dựa trên keyword match với task description.
-
-| Skill file | Keywords kích hoạt | Mô tả |
-| --- | --- | --- |
-| `task_planner.md` | tính, toán, calculator, cộng, trừ, nhân, chia... | Hướng dẫn ReAct loop cho bài toán tính toán |
-| `file_operations.md` | file, tệp, đọc, ghi, lưu, thư mục | Hướng dẫn thao tác file an toàn trong workspace |
-| `error_recovery.md` | *(kích hoạt khi tool trả về lỗi)* | Hướng dẫn phục hồi khi gặp lỗi |
-
-Skill được **inject vào system prompt** trước khi gọi LLM, giúp Agent có context hành động đúng hơn.
-
----
-
-## 10. Benchmark & Đánh giá
-
-### 10.1 Dataset (`src/benchmark/task.json`, `keyword_tasks.json`)
-
-Hai file benchmark gồm 10 task FunctionalEvaluator và 10 task
-KeywordEvaluator; mỗi file được chia thành 4 task dễ, 4 task trung bình và 2
-task khó:
-
-| Mức | Task | Mô tả |
-| --- | --- | --- |
-| **DE** (Dễ) | task_001 | Tính 128÷8, lưu vào `result.txt` |
-| **DE** | task_002 | Ghi chuỗi vào `greeting.txt` |
-| **DE** | task_003 | Ghi rồi đọc lại file `notes.txt` |
-| **DE** | task_004 | Lấy thời gian hệ thống, lưu vào `time.txt` |
-| **TB** (Trung bình) | task_005 | Tính có điều kiện → chọn file ghi |
-| **TB** | task_006 | Chuỗi: write → read → calculator → write |
-| **TB** | task_007 | Dùng `memory` tool lưu và truy xuất |
-| **TB** | task_008 | Exec có điều kiện kết hợp file_write |
-| **KHO** (Khó) | task_009 | Multi-step: tính tổng, lưu, đọc, cộng thêm, ghi đè |
-| **KHO** | task_010 | web_search + xử lý kết quả → lưu file |
-| **DE** | task_011–014 | calculator và JSON parser; chấm keyword trong final answer |
-| **TB** | task_015–018 | chuỗi phép tính, file, JSON và exec; yêu cầu nhiều keyword |
-| **KHO** | task_019–020 | phối hợp calculator, file và memory; yêu cầu nhiều keyword |
-
-### 10.2 Cơ chế đánh giá
-
-| Eval type | Class | Cơ chế |
-| --- | --- | --- |
-| `keyword` | `KeywordEvaluator` | Kiểm tra `final_answer` có chứa tất cả từ khóa yêu cầu |
-| `functional` | `FunctionalEvaluator` | Chạy shell script (`eval_script`), exit code 0 = pass |
-
-### 10.3 Persistent Memory với Vector Search (Bonus)
-
-`Memory` tool hỗ trợ **embedding-based similarity search** thay cho keyword search:
-
-- Khi `save`, nội dung được nhúng qua **`nomic-embed-text`** (Ollama `/api/embed`) và lưu kèm embedding.
-- Khi `load`, query được nhúng và tìm bằng **cosine similarity** trong C++ (`cosineSimilarityVectors`).
-- Memory được **persist bằng SQLite** trong `memory_store.db` nên sống sót giữa
-  các lần chạy; vector embedding được lưu ở cột BLOB.
-- Nếu Ollama chưa chạy, tự động fallback về trigram vector search.
-
-**Cấu hình embedding trong `config.json`:**
-
-```json
-{
-=======
   },
->>>>>>> 76d81ac ( modify md file)
   "ollama": {
     "base_url": "http://localhost:11434",
     "model_name": "qwen2.5:7b",
@@ -664,10 +215,14 @@ Dành cho các tác vụ phức tạp có thể **phân rã thành nhiều subta
 
 ### 5.3 Chạy Benchmark toàn bộ tập Task
 
-Thực thi tự động bộ 10 task benchmark, xuất trajectory và báo cáo tỷ lệ thành công:
+Chạy cả 20 task (10 functional + 10 keyword) trong **một batch duy nhất**.
+Harness chỉ dọn artifact một lần, giữ đủ 20 trajectory và xuất một
+`benchmark_summary.json` hợp nhất:
 
 ```bash
-./build/agent_run --benchmark src/benchmark/task.json
+./build/agent_run --benchmark \
+  src/benchmark/task.json \
+  src/benchmark/keyword_tasks.json
 ```
 
 ---
@@ -685,7 +240,7 @@ Thực thi tự động bộ 10 task benchmark, xuất trajectory và báo cáo 
 | Cú pháp Flag | Tham số | Mô tả chức năng |
 | :--- | :--- | :--- |
 | *(không đối số)* | — | Mở Interactive REPL (Single-Agent) |
-| `--benchmark` | `<tasks.json>` | Chạy đánh giá toàn bộ batch task |
+| `--benchmark` | `<tasks.json> [more.json ...]` | Gộp một hoặc nhiều file task vào cùng một batch |
 | `--run-task` | `<task_id> <tasks.json>` | Chạy 1 task cụ thể theo mã định danh |
 | `--verbose` | — | Bật chế độ in chi tiết từng bước ReAct |
 | `--config` | `<config.json>` | Chỉ định đường dẫn file cấu hình LLM |
@@ -737,7 +292,8 @@ Agent_25127446_25127320_25127151/
 │   │   └── multi_agent_coordinator.h/.cpp   # Coordinator Multi-Agent: std::jthread + MessageQueue
 │   │
 │   ├── benchmark/                            # Tập dữ liệu & Entry point Benchmark
-│   │   ├── task.json                        # 10 task benchmark (4 Dễ, 4 Trung bình, 2 Khó)
+│   │   ├── task.json                        # 10 task functional
+│   │   ├── keyword_tasks.json               # 10 task keyword
 │   │   └── run_eval.cpp                     # main() cho benchmark_run
 │   │
 │   ├── skills/                               # Tri thức nghiệp vụ lưu dạng Markdown (.md)
@@ -766,7 +322,7 @@ Agent_25127446_25127320_25127151/
 │
 ├── results/                                  # Thư mục chứa kết quả benchmark (JSON format)
 │   ├── benchmark_summary.json               # Tổng hợp tỷ lệ thành công, điểm số, thời gian
-│   └── trajectory_task_001..010.json        # Dấu vết chi tiết từng bước của từng task
+│   └── trajectory_task_001..020.json        # Dấu vết của batch đầy đủ 20 task
 │
 ├── workspace/                                # Không gian làm việc cô lập cho các task
 ├── main.cpp                                 # Entry point chính của agent_run
@@ -898,9 +454,10 @@ Mỗi công cụ kế thừa từ lớp cơ sở trừu tượng `Tool` (`execut
 
 ## 12. Đo kiểm & Đánh giá (Harness & Benchmark Suite)
 
-### 12.1 Dataset Benchmark (`src/benchmark/task.json`)
+### 12.1 Dataset Benchmark 20 task
 
-Bộ 10 task đa dạng chia làm 3 cấp độ:
+Bộ benchmark đầy đủ gồm `task.json` (10 functional) và `keyword_tasks.json`
+(10 keyword), được truyền đồng thời cho `runBatch()` để tạo một báo cáo 20 task:
 
 | Cấp độ | Mã Task | Tóm tắt yêu cầu tác vụ | Cơ chế đánh giá |
 | :---: | :--- | :--- | :---: |
@@ -914,6 +471,12 @@ Bộ 10 task đa dạng chia làm 3 cấp độ:
 | **TRUNG BÌNH** | `task_008` | Chạy lệnh `exec` có điều kiện kết hợp ghi file kết quả | Functional |
 | **KHÓ** | `task_009` | Multi-step: Tính toán, lưu file, đọc lại, cộng dồn và ghi đè kết quả | Functional |
 | **KHÓ** | `task_010` | Tìm kiếm `web_search`, phân tích kết quả và tổng hợp vào file | Functional |
+| **DỄ–KHÓ** | `task_011`–`task_020` | Tính toán, JSON, exec, file và memory; kiểm tra nội dung câu trả lời cuối | Keyword |
+
+`HarnessRunner::runBatch(const std::vector<std::string>&)` nạp tất cả file,
+kiểm tra ID trùng trên toàn bộ dataset, dọn trajectory cũ đúng một lần rồi mới
+chạy task. Vì vậy kết quả functional không bị xóa khi chuyển sang nhóm keyword,
+và `benchmark_summary.json` luôn phản ánh toàn bộ batch.
 
 ### 12.2 Cơ chế Đánh giá (Evaluators)
 - **`KeywordEvaluator`:** Kiểm tra sự xuất hiện của các từ khóa bắt buộc trong `final_answer`.

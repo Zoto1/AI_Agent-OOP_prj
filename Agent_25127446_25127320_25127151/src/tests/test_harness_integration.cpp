@@ -58,12 +58,41 @@ public:
     }
 };
 
+class MultiFileHarnessFakeClient : public LLMClient
+{
+private:
+    const std::vector<std::string> responses = {
+        R"({"type":"tool_call","tool":"file_write","args":{"path":"result.txt","content":"255"}})",
+        R"({"type":"final_answer","answer":"Da ghi ket qua 255"})",
+        R"({"type":"tool_call","tool":"file_write","args":{"path":"keyword.txt","content":"KEYWORD_OK"}})",
+        R"({"type":"final_answer","answer":"KEYWORD_OK trong keyword.txt"})"
+    };
+    std::size_t index = 0;
+
+public:
+    MultiFileHarnessFakeClient()
+        : LLMClient(LLMConfig{.model_name = "fake-multi-file"}) {}
+
+    std::string chat(const std::vector<Message> &) override
+    {
+        assert(index < responses.size());
+        return responses[index++];
+    }
+
+    std::string chatMultimodal(const std::vector<Message> &messages,
+                               const std::vector<std::string> &) override
+    {
+        return chat(messages);
+    }
+};
+
 int main()
 {
     const fs::path root = fs::absolute("test_harness_integration_artifacts");
     const fs::path output = root / "results";
     const fs::path workspace = root / "workspace";
     const fs::path tasks_path = root / "tasks.json";
+    const fs::path keyword_tasks_path = root / "keyword_tasks.json";
     std::error_code error;
     fs::remove_all(root, error);
     fs::create_directories(root);
@@ -77,6 +106,16 @@ int main()
         {"max_steps", 4}
     }});
     std::ofstream(tasks_path) << tasks.dump(2);
+
+    const json keyword_tasks = json::array({{
+        {"id", "integration_002"},
+        {"description", "Second benchmark file"},
+        {"instruction", "Ghi KEYWORD_OK vao keyword.txt"},
+        {"eval_type", "keyword"},
+        {"eval_keywords", json::array({"KEYWORD_OK", "keyword.txt"})},
+        {"max_steps", 4}
+    }});
+    std::ofstream(keyword_tasks_path) << keyword_tasks.dump(2);
 
     ToolRegistry &singleton = ToolRegistry::getInstance();
     singleton.registerTool(std::make_shared<FileWriteTool>(
@@ -112,6 +151,32 @@ int main()
         {"action", "load"}, {"query", "stale_key"}
     });
     assert(stale.find("Khong tim thay") != std::string::npos);
+
+    // Multiple task files must form one batch: cleanup happens once and the
+    // final summary/trajectory set contains results from both files.
+    const fs::path combined_output = root / "combined_results";
+    const fs::path combined_workspace = root / "combined_workspace";
+    HarnessRunner combined_harness(std::make_shared<MultiFileHarnessFakeClient>(),
+                                   registry, nullptr, nullptr,
+                                   combined_output.string(),
+                                   combined_workspace.string());
+    const std::vector<TaskResult> combined_results = combined_harness.runBatch(
+        std::vector<std::string>{tasks_path.string(),
+                                 keyword_tasks_path.string()});
+
+    assert(combined_results.size() == 2);
+    assert(combined_results[0].success);
+    assert(combined_results[1].success);
+    assert(fs::exists(combined_output / "trajectory_integration_001.json"));
+    assert(fs::exists(combined_output / "trajectory_integration_002.json"));
+
+    json combined_summary;
+    std::ifstream(combined_output / "benchmark_summary.json") >> combined_summary;
+    assert(combined_summary["total_tasks"] == 2);
+    assert(combined_summary["passed"] == 2);
+    assert(combined_summary["results"].size() == 2);
+    assert(combined_summary["results"][0]["eval_type"] == "functional");
+    assert(combined_summary["results"][1]["eval_type"] == "keyword");
 
     // Network failures must still produce both a per-task trajectory and the
     // batch summary instead of only being printed to stderr.

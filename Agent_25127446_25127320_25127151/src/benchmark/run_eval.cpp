@@ -21,6 +21,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 int main(int argc, char* argv[])
 {
@@ -30,7 +31,7 @@ int main(int argc, char* argv[])
          * Cách dùng:
          *
          * Chạy toàn bộ:
-         * benchmark_run
+         * benchmark_run  (mac dinh gop task.json + keyword_tasks.json)
          * benchmark_run config.json src/benchmark/task.json
          *
          * Chạy một task:
@@ -55,10 +56,12 @@ int main(int argc, char* argv[])
                 ? argv[1]
                 : "config.json";
 
-        const std::string tasks_path =
+        const std::vector<std::string> tasks_paths =
             argc > 2
-                ? argv[2]
-                : "src/benchmark/task.json";
+                ? std::vector<std::string>{argv[2]}
+                : std::vector<std::string>{
+                      "src/benchmark/task.json",
+                      "src/benchmark/keyword_tasks.json"};
 
         const std::string task_id =
             argc > 3
@@ -151,7 +154,7 @@ int main(int argc, char* argv[])
                 << task_id << "\n";
 
             runner.runSingleTask(
-                tasks_path,
+                tasks_paths.front(),
                 task_id
             );
         }
@@ -159,9 +162,9 @@ int main(int argc, char* argv[])
         {
             std::cout
                 << "Dang chay toan bo benchmark: "
-                << tasks_path << "\n";
+                << tasks_paths.size() << " file task trong mot batch\n";
 
-            runner.runBatch(tasks_path);
+            runner.runBatch(tasks_paths);
         }
 
         return 0;
