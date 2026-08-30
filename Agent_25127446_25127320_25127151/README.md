@@ -53,7 +53,7 @@ Dự án hiện thực một **AI Agent Framework** hoàn chỉnh viết bằng 
 ### Yêu cầu môi trường:
 - **Hệ điều hành:** Linux (Ubuntu 22.04 / 24.04 LTS) hoặc Windows Subsystem for Linux (WSL / WSL2).
 - **Trình biên dịch:** GCC $\ge$ 15.0 (hỗ trợ **C++26**, gồm deleted functions với diagnostic message; đồng thời hỗ trợ `std::expected`, `std::print`, `std::jthread` và Concepts).
-- **Công cụ build:** CMake $\ge$ 3.20.
+- **Công cụ build:** CMake $\ge$ 3.25.
 
 ### Cài đặt các thư viện phụ thuộc:
 
