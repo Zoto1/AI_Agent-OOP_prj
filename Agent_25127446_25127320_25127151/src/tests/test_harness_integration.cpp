@@ -40,6 +40,24 @@ public:
     }
 };
 
+class NetworkFailingClient : public LLMClient
+{
+public:
+    NetworkFailingClient()
+        : LLMClient(LLMConfig{.model_name = "offline-test"}) {}
+
+    std::string chat(const std::vector<Message> &) override
+    {
+        throw APIEnvironmentError("API_ENVIRONMENT: simulated network failure");
+    }
+
+    std::string chatMultimodal(const std::vector<Message> &messages,
+                               const std::vector<std::string> &) override
+    {
+        return chat(messages);
+    }
+};
+
 int main()
 {
     const fs::path root = fs::absolute("test_harness_integration_artifacts");
@@ -94,6 +112,29 @@ int main()
         {"action", "load"}, {"query", "stale_key"}
     });
     assert(stale.find("Khong tim thay") != std::string::npos);
+
+    // Network failures must still produce both a per-task trajectory and the
+    // batch summary instead of only being printed to stderr.
+    const fs::path offline_output = root / "offline_results";
+    const fs::path offline_workspace = root / "offline_workspace";
+    HarnessRunner offline_harness(std::make_shared<NetworkFailingClient>(),
+                                  registry, nullptr, nullptr,
+                                  offline_output.string(),
+                                  offline_workspace.string());
+    const std::vector<TaskResult> offline_results =
+        offline_harness.runBatch(tasks_path.string());
+
+    assert(offline_results.size() == 1);
+    assert(!offline_results[0].success);
+    assert(offline_results[0].error.has_value());
+    assert(fs::exists(offline_output / "trajectory_integration_001.json"));
+    assert(fs::exists(offline_output / "benchmark_summary.json"));
+
+    json offline_summary;
+    std::ifstream(offline_output / "benchmark_summary.json") >> offline_summary;
+    assert(offline_summary["total_tasks"] == 1);
+    assert(offline_summary["errored"] == 1);
+    assert(!offline_summary["results"][0]["error"].is_null());
 
     fs::remove_all(root, error);
     return 0;

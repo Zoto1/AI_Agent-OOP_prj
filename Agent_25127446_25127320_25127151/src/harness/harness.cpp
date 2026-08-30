@@ -382,18 +382,43 @@ TaskResult HarnessRunner::runTask(
     // Mỗi benchmark task bắt đầu với trạng thái tool riêng. Với
     // NativeEnvironment, reset trong đúng workspace của task để các tool có
     // persistence tương đối (như Memory) không đụng dữ liệu task khác.
-    if (tool_registry)
+    try
     {
-        auto native_env = std::dynamic_pointer_cast<NativeEnvironment>(env);
-        if (native_env)
+        if (tool_registry)
         {
-            CurrentPathGuard path_guard(native_env->getWorkingDir());
-            tool_registry->resetToolStates();
+            auto native_env = std::dynamic_pointer_cast<NativeEnvironment>(env);
+            if (native_env)
+            {
+                CurrentPathGuard path_guard(native_env->getWorkingDir());
+                tool_registry->resetToolStates();
+            }
+            else
+            {
+                tool_registry->resetToolStates();
+            }
         }
-        else
+    }
+    catch (const std::exception& error)
+    {
+        trajectory.termination_status = TerminationStatus::EnvironmentError;
+        trajectory.error_message =
+            std::string("Loi khoi tao tool cho task: ") + error.what();
+        result.error = trajectory.error_message;
+
+        updateElapsedTime();
+        safelyExportTrajectory();
+
+        try
         {
-            tool_registry->resetToolStates();
+            env->teardown();
         }
+        catch (const std::exception& teardown_error)
+        {
+            std::cerr << "Canh bao [HarnessRunner]: loi teardown task '"
+                      << task.id << "': " << teardown_error.what() << '\n';
+        }
+
+        return result;
     }
 
     /*
@@ -633,10 +658,44 @@ HarnessRunner::runBatch(const std::string &tasks_json_path) {
   std::vector<TaskResult> results;
   results.reserve(tasks.size());
 
+  auto saveCheckpoint = [&]() -> bool {
+    try {
+      exportBenchmarkSummary(results);
+      return true;
+    } catch (const std::exception &error) {
+      std::cerr << "Canh bao [HarnessRunner]: khong luu duoc checkpoint: "
+                << error.what() << '\n';
+      return false;
+    }
+  };
+
+  // Tao summary ngay tu dau. Neu API mat mang hoac nguoi dung dung batch
+  // giua chung, file ket qua van ton tai va cac task da xong da duoc giu lai.
+  bool summary_saved = saveCheckpoint();
+
   for (const auto &task : tasks) {
     std::cout << "==> Đang chạy task [" << task.id << "]: " << task.description
               << "\n";
-    TaskResult r = runTask(task);
+    TaskResult r;
+    try {
+      r = runTask(task);
+    } catch (const std::exception &error) {
+      r.task_id = task.id;
+      r.eval_type = task.eval_type;
+      r.success = false;
+      r.score = 0.0;
+      r.trajectory_path =
+          (fs::path(output_dir) / ("trajectory_" + task.id + ".json")).string();
+      r.error = std::string("Loi ngoai du kien khi chay task: ") + error.what();
+    } catch (...) {
+      r.task_id = task.id;
+      r.eval_type = task.eval_type;
+      r.success = false;
+      r.score = 0.0;
+      r.trajectory_path =
+          (fs::path(output_dir) / ("trajectory_" + task.id + ".json")).string();
+      r.error = "Loi ngoai du kien khong xac dinh khi chay task";
+    }
 
     if (r.error) {
       std::cout << "    THẤT BẠI (lỗi): " << *r.error << "\n";
@@ -648,29 +707,19 @@ HarnessRunner::runBatch(const std::string &tasks_json_path) {
     }
 
     results.push_back(std::move(r));
+    summary_saved = saveCheckpoint();
   }
 
   printReport(results);
 
-try
-{
-    exportBenchmarkSummary(results);
-
-    std::cout
-        << "Da xuat bao cao JSON: "
-        << (
-            fs::path(output_dir) /
-            "benchmark_summary.json"
-        ).string()
-        << "\n";
-}
-catch (const std::exception& error)
-{
-    std::cerr
-        << "Canh bao [HarnessRunner]: "
-        << error.what()
-        << "\n";
-}
+  if (!summary_saved) {
+    summary_saved = saveCheckpoint();
+  }
+  if (summary_saved) {
+    std::cout << "Da xuat bao cao JSON: "
+              << (fs::path(output_dir) / "benchmark_summary.json").string()
+              << "\n";
+  }
 
 return results;
 }
@@ -880,16 +929,37 @@ void HarnessRunner::exportBenchmarkSummary(
   summary["results"] = result_list;
 
   const fs::path output_path = fs::path(output_dir) / "benchmark_summary.json";
+  const fs::path temporary_path = output_path.string() + ".tmp";
 
-  std::ofstream output_file(output_path);
+  std::ofstream output_file(temporary_path, std::ios::trunc);
 
   if (!output_file.is_open()) {
     throw std::runtime_error(
         "Loi [HarnessRunner]: Khong ghi duoc file benchmark summary: " +
-        output_path.string());
+        temporary_path.string());
   }
 
   output_file << summary.dump(4);
+  output_file.flush();
+  if (!output_file.good()) {
+    output_file.close();
+    std::error_code remove_error;
+    fs::remove(temporary_path, remove_error);
+    throw std::runtime_error(
+        "Loi [HarnessRunner]: Ghi file benchmark summary khong hoan tat: " +
+        temporary_path.string());
+  }
+  output_file.close();
+
+  std::error_code rename_error;
+  fs::rename(temporary_path, output_path, rename_error);
+  if (rename_error) {
+    std::error_code remove_error;
+    fs::remove(temporary_path, remove_error);
+    throw std::runtime_error(
+        "Loi [HarnessRunner]: Khong thay the duoc benchmark summary: " +
+        rename_error.message());
+  }
 }
 
 // =============================================================================
