@@ -3,7 +3,7 @@
 > **Trường Đại học Khoa học Tự nhiên — ĐHQG-HCM (HCMUS)**  
 > **Khoa Công nghệ Thông tin — Bộ môn Công nghệ Phần mềm**  
 > **Đồ án môn học:** Lập trình Hướng đối tượng (OOP 2026)  
-> **Framework:** AI Agent ReAct (Reason + Act + Observe) viết bằng **C++23 / C++20 / C++17 / C++26** hỗ trợ đa nhà cung cấp LLM (Google Gemini & Ollama / Local LLM / Google Colab / Kaggle Gemma 4), Tool Calling, Skill System, Loop Detector, SQLite Persistent Vector Memory, Multi-Agent Parallel Coordination và Evaluation Harness.
+> **Framework:** AI Agent ReAct (Reason + Act + Observe) biên dịch ở chuẩn **C++26** và sử dụng các tính năng từ C++17–C++26; hỗ trợ Google Gemini, Ollama/local LLM, Tool Calling, Skill System, Loop Detector, SQLite Persistent Vector Memory, Multi-Agent Parallel Coordination và Evaluation Harness.
 
 ---
 
@@ -39,11 +39,11 @@
 
 ## 1. Tổng quan dự án
 
-Dự án hiện thực một **AI Agent Framework** hoàn chỉnh viết hoàn toàn bằng C++ hiện đại (C++23) với các đặc điểm nổi bật:
+Dự án hiện thực một **AI Agent Framework** hoàn chỉnh viết bằng C++ hiện đại, với target build **C++26**:
 - **Chu trình ReAct Engine:** Lập luận (Think) $\rightarrow$ Hành động (Act) $\rightarrow$ Quan sát kết quả (Observe).
 - **Hybrid Tool Calling:** Hỗ trợ song song cả **Native Function Calling** (Gemini / OpenAI API) và **Self-Repairing JSON Fallback Parser** (Local LLM qua Ollama).
 - **Phân tầng kiến trúc độc lập (Decoupling):** `AgentLoop` hoàn toàn không phụ thuộc vào `HarnessRunner`, giao tiếp qua cơ chế **Observer Pattern / Hook**.
-- **Quản lý bộ nhớ hiện đại:** Sử dụng 100% smart pointers (`std::shared_ptr`, `std::unique_ptr`), RAII, không rò rỉ bộ nhớ (Memory-leak free).
+- **Quản lý bộ nhớ hiện đại:** Ưu tiên smart pointers (`std::shared_ptr`, `std::unique_ptr`) và RAII để quản lý vòng đời tài nguyên.
 - **Mở rộng cao cấp:** Tích hợp lưu trữ cơ sở dữ liệu **SQLite** kết hợp tìm kiếm ngữ nghĩa Vector Embedding (Cosine similarity) và điều phối **Multi-Agent** chạy song song đa luồng qua `std::jthread`.
 
 ---
@@ -67,7 +67,8 @@ sudo apt install -y cmake g++ \
     sqlite3
 ```
 
-*(Lưu ý: Nếu hệ thống chưa có sẵn `nlohmann/json`, CMakeLists.txt đã cấu hình FetchContent để tự động tải mã nguồn dự phòng).*
+`CMakeLists.txt` yêu cầu các development package trên có sẵn trong hệ thống và
+sẽ dừng configure với thông báo cài đặt nếu thiếu; dự án không tự tải dependency.
 
 ---
 
@@ -108,7 +109,7 @@ Dự án đọc cấu hình từ file `config.json` đặt tại thư mục gố
     "temperature": 0.7,
     "max_tokens": 1024,
     "timeout_ms": 30000,
-    "api_key": "YOUR_GEMINI_API_KEY"
+    "api_key": ""
   },
   "ollama": {
     "base_url": "http://localhost:11434",
@@ -136,7 +137,8 @@ Dự án đọc cấu hình từ file `config.json` đặt tại thư mục gố
 | `api_key` | `string` | Khóa API (ưu tiên đọc từ file; fallback tự động qua biến môi trường) |
 | `embedding` | `object` | Cấu hình mô hình vector embedding qua Ollama (`nomic-embed-text`) |
 
-> **Bảo mật:** `config.json` đã được đưa vào `.gitignore`. Bạn cũng có thể thiết lập API Key qua biến môi trường:
+> **Bảo mật:** Repo chứa `config.json` mẫu với `api_key` để trống. Không ghi key
+> thật vào file này; nên truyền key qua biến môi trường trong terminal hiện tại:
 > ```bash
 > export GEMINI_API_KEY="your_actual_gemini_api_key"
 > ```
@@ -169,7 +171,7 @@ Nhap yeu cau (go 'exit' de thoat):
 [Action] calculator {"expression":"128/8"}
 [Observation] 16
 [Thought] Ghi kết quả 16 vào file result.txt.
-[Action] file_write {"filename":"result.txt","content":"16"}
+[Action] file_write {"path":"result.txt","content":"16"}
 [Observation] Successfully wrote to result.txt
 [Final Answer] Đã tính 128/8 = 16 và lưu vào result.txt thành công.
 > exit
@@ -195,7 +197,7 @@ Dành cho các tác vụ phức tạp có thể **phân rã thành nhiều subta
    ```text
    multi-agent> Tính 15 * 17; Tính 2024 - 1999; Ghi 'Hello HCMUS' vào status.txt
    ```
-   *Hệ thống tự động kích hoạt 3 sub-agent song song, trao đổi qua `MessageQueue` và xuất bảng tổng hợp kết quả Markdown.*
+   *Hệ thống tự động kích hoạt 3 sub-agent song song; mỗi agent báo kết quả về coordinator qua `MessageQueue`, sau đó chương trình in phần tổng hợp.*
 
 2. **Chế độ soạn thảo nhiều dòng (`:multi`):**
    ```text
@@ -224,6 +226,10 @@ Harness chỉ dọn artifact một lần, giữ đủ 20 trajectory và xuất m
   src/benchmark/task.json \
   src/benchmark/keyword_tasks.json
 ```
+
+API miễn phí có thể trả HTTP 429. Client sẽ tự backoff/retry và Harness ghi
+checkpoint `benchmark_summary.json` sau từng task, vì vậy batch thực tế có thể
+mất vài phút.
 
 ---
 
@@ -327,8 +333,8 @@ Agent_25127446_25127320_25127151/
 ├── workspace/                                # Không gian làm việc cô lập cho các task
 ├── main.cpp                                 # Entry point chính của agent_run
 ├── demo_multi_agent.cpp                      # Entry point của demo_multi_agent
-├── config.json                              # Cấu hình API LLM & Database (gitignored)
-├── CMakeLists.txt                           # File build CMake đa mục tiêu chuẩn C++23
+├── config.json                              # Cấu hình mẫu; API key để trống
+├── CMakeLists.txt                           # File build CMake đa mục tiêu chuẩn C++26
 ├── .gitignore                               # Quy tắc loại trừ file nhạy cảm và binary
 └── README.md                                # Hướng dẫn kỹ thuật và sử dụng chi tiết
 ```
@@ -420,7 +426,7 @@ Mỗi công cụ kế thừa từ lớp cơ sở trừu tượng `Tool` (`execut
 | `file_read` | `FileReadTool` | Bắt buộc | Đọc nội dung file an toàn trong phạm vi workspace |
 | `file_write` | `FileWriteTool` | Bắt buộc | Ghi hoặc tạo mới file trong workspace |
 | `memory` | `Memory` | Bắt buộc (Bonus) | Lưu và truy vấn bộ nhớ ngữ cảnh qua **SQLite Database** + **Cosine Vector Search** |
-| `web_search` | `WebSearchTool` | Mở rộng | Tìm kiếm thông tin trực tuyến qua DuckDuckGo API |
+| `web_search` | `WebSearchTool` | Mở rộng | Tìm kiếm thông tin trực tuyến qua DuckDuckGo HTML endpoint |
 | `datetime` | `DateTimeTool` | Mở rộng | Truy xuất ngày, giờ hệ thống theo định dạng chuẩn |
 | `http_get` | `HttpGetTool` | Mở rộng | Gửi HTTP GET request đến các dịch vụ Web REST API |
 | `json_parse` | `JsonParserTool` | Mở rộng | Phân tích cú pháp JSON và trích xuất dữ liệu theo Dot Notation |
@@ -482,6 +488,27 @@ và `benchmark_summary.json` luôn phản ánh toàn bộ batch.
 - **`KeywordEvaluator`:** Kiểm tra sự xuất hiện của các từ khóa bắt buộc trong `final_answer`.
 - **`FunctionalEvaluator`:** Thực thi kịch bản shell script kiểm tra trực tiếp trạng thái file hệ thống, exit code 0 là **PASS**.
 
+### 12.3 Kết quả benchmark thực tế
+
+Lần xác minh ngày **30/08/2026** với model `gemma-4-26b-a4b-it` và lệnh ở
+mục 5.3 cho kết quả:
+
+| Chỉ số | Kết quả |
+| :--- | ---: |
+| Tổng số task | 20 |
+| Functional | 10/10 pass |
+| Keyword | 10/10 pass |
+| Tổng cộng | **20/20 pass (100%)** |
+| Lỗi thực thi | 0 |
+| Điểm trung bình | 1.0 |
+| Tổng thời gian | 467,047 ms |
+| Thời gian trung bình/task | 23,352.35 ms |
+| Tổng token ghi nhận | 142,571 |
+
+Kết quả chi tiết được Harness sinh tại `results/benchmark_summary.json` và
+`results/trajectory_task_001.json` đến `trajectory_task_020.json`. Thư mục
+`results/` là runtime artifact và không cần đưa vào gói source nộp bài.
+
 ---
 
 ## 13. Tính năng Mở rộng — Điểm thưởng (Bonus Features)
@@ -498,7 +525,7 @@ và `benchmark_summary.json` luôn phản ánh toàn bộ batch.
 - **Kiến trúc Đa luồng:** `MultiAgentCoordinator` phân chia tác vụ tổng thể thành nhiều `SubTaskDefinition` độc lập.
 - **Quản lý Luồng Hiện đại:** Mỗi sub-agent được quản lý bởi `SubAgentHandle` sử dụng `std::jthread` (tự động thu hồi tài nguyên và join luồng qua RAII).
 - **Hàng đợi Thread-Safe:** Giao tiếp giữa các Agent thông qua template class `MessageQueue<T>`.
-- **Độc lập Ngữ cảnh:** Mỗi sub-agent sở hữu một `AgentLoop` riêng biệt, xuất file trajectory riêng (`results/trajectory_sub_*.json`) và được tổng hợp thành bảng báo cáo Markdown.
+- **Độc lập Ngữ cảnh:** Mỗi sub-agent sở hữu một `AgentLoop` và `Trajectory` trong bộ nhớ riêng; coordinator thu kết quả rồi tổng hợp thành văn bản. Chế độ demo hiện không xuất trajectory sub-agent ra file.
 
 ---
 
@@ -511,34 +538,11 @@ cd build
 ctest --output-on-failure
 ```
 
-**Kết quả kiểm thử:**
+**Kết quả xác minh ngày 30/08/2026 (GCC 15.2.0):**
 
 ```text
-      Start  1: KeywordEvaluatorTest
- 1/11 Test  #1: KeywordEvaluatorTest .............   Passed    0.03 sec
-      Start  2: FunctionalEvaluatorTest
- 2/11 Test  #2: FunctionalEvaluatorTest ..........   Passed    0.08 sec
-      Start  3: TrajectoryTest
- 3/11 Test  #3: TrajectoryTest ...................   Passed    0.02 sec
-      Start  4: TerminationStatusTest
- 4/11 Test  #4: TerminationStatusTest ............   Passed    0.02 sec
-      Start  5: AgentToolCallTest
- 5/11 Test  #5: AgentToolCallTest ................   Passed    0.04 sec
-      Start  6: GeminiResponseTest
- 6/11 Test  #6: GeminiResponseTest ...............   Passed    0.04 sec
-      Start  7: MultiAgentTest
- 7/11 Test  #7: MultiAgentTest ...................   Passed    0.10 sec
-      Start  8: ToolsTest
- 8/11 Test  #8: ToolsTest ........................   Passed    0.05 sec
-      Start  9: ExecToolTest
- 9/11 Test  #9: ExecToolTest .....................   Passed    0.24 sec
-      Start 10: HarnessIntegrationTest
-10/11 Test #10: HarnessIntegrationTest ...........   Passed    0.12 sec
-      Start 11: EmbeddingMemoryTest
-11/11 Test #11: EmbeddingMemoryTest ..............   Passed    3.26 sec
-
 100% tests passed, 0 tests failed out of 11
-Total Test time (real) = 4.12 sec
+Total Test time (real) = 3.41 sec
 ```
 
 ---
@@ -558,11 +562,11 @@ Toàn bộ sơ đồ thiết kế chi tiết chuẩn Mermaid được lưu trữ
 
 ## 16. Thông tin Nhóm sinh viên
 
-| STT | Mã số sinh viên (MSSV) | Vai trò & Phân công |
-| :---: | :---: | :--- |
-| 1 | **25127320** | Agent Core (`AgentLoop`, `LoopDetector`, `SkillLoader`), C++ Modern Features |
-| 2 | **25127151** | LLM Client (`GeminiClient`, `OllamaClient`), Tool System (9 Tools, SQLite Memory) |
-| 3 | **25127446** | Harness Runner, Environment, Evaluators, Multi-Agent Coordination & Benchmark |
+| STT | Họ và tên | Mã số sinh viên (MSSV) | Vai trò & Phân công |
+| :---: | :--- | :---: | :--- |
+| 1 | **Nguyễn Minh Nhật** | **25127446** | Harness và Benchmark: `HarnessRunner`, trajectory, environment, evaluator, step hook, chạy benchmark và tổng hợp kết quả |
+| 2 | **Huỳnh Nhật Hạ** | **25127320** | Agent Core và Abstraction Layer: `AgentLoop`, `LoopDetector`, `SkillLoader`, các lớp trừu tượng và kỹ thuật C++ |
+| 3 | **Nguyễn Ngọc Anh Thư** | **25127151** | LLM Client (`GeminiClient`, `OllamaClient`) và Tool System (9 Tools, SQLite Memory) |
 
 ---
 *Thành phố Hồ Chí Minh, Năm 2026*
